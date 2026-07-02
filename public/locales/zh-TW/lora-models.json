@@ -1,0 +1,20 @@
+{
+  "close": "關閉",
+  "close_dialog": "關閉對話框",
+  "model_description": "模型描述",
+  "model_info": "模型資訊",
+  "style_tags": "風格標籤",
+  "model_id": "模型 ID", 
+  "created_at": "創建時間",
+  "no_description": "暫無描述",
+  "no_description_hint": "此模型尚未提供詳細描述",
+  "categories": "分類",
+  "model_preview": "模型預覽",
+  "model_details": "模型詳情",
+  "select_model": "選擇模型",
+  "view_details": "查看詳情",
+  "loading": "載入中...",
+  "error": "發生錯誤",
+  "tag_count": "{{count}} 個標籤",
+  "tag_count_plural": "{{count}} 個標籤"
+}

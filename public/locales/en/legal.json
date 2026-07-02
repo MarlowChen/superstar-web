@@ -1,0 +1,14 @@
+{
+  "legal": {
+    "title": "Terms and Privacy Policies",
+    "tabs": {
+      "terms": "terms & policies",
+      "privacy": "Privacy Policy",
+      "copyright": "Copyright Policy",
+      "refund": "Refund Policy",
+      "cookie": "Cookie Policy"
+    },
+    "documentNotFound": "Document not found",
+    "agreeButton": "I have read and agree"
+  }
+}

@@ -1,0 +1,211 @@
+{
+  "presets": [
+    {
+      "id": "instagram-square",
+      "name": "Instagram 正方形",
+      "width": 1080,
+      "height": 1080,
+      "description": "適合 Instagram 貼文的正方形格式",
+      "category": "social-media"
+    },
+    {
+      "id": "instagram-story",
+      "name": "Instagram 限時動態",
+      "width": 1080,
+      "height": 1920,
+      "description": "適合 Instagram 限時動態的垂直格式",
+      "category": "social-media"
+    },
+    {
+      "id": "facebook-cover",
+      "name": "Facebook 封面",
+      "width": 1200,
+      "height": 630,
+      "description": "適合 Facebook 封面照片的橫向格式",
+      "category": "social-media"
+    },
+    {
+      "id": "twitter-header",
+      "name": "Twitter 標題",
+      "width": 1500,
+      "height": 500,
+      "description": "適合 Twitter 標題照片的寬格式",
+      "category": "social-media"
+    },
+    {
+      "id": "youtube-thumbnail",
+      "name": "YouTube 縮圖",
+      "width": 1280,
+      "height": 720,
+      "description": "適合 YouTube 影片縮圖的 16:9 格式",
+      "category": "video"
+    },
+    {
+      "id": "linkedin-post",
+      "name": "LinkedIn 貼文",
+      "width": 1200,
+      "height": 627,
+      "description": "適合 LinkedIn 貼文的橫向格式",
+      "category": "professional"
+    },
+    {
+      "id": "pinterest-pin",
+      "name": "Pinterest 圖釘",
+      "width": 1000,
+      "height": 1500,
+      "description": "適合 Pinterest 圖釘的垂直格式",
+      "category": "social-media"
+    },
+    {
+      "id": "tiktok-video",
+      "name": "TikTok 影片",
+      "width": 1080,
+      "height": 1920,
+      "description": "適合 TikTok 影片的垂直格式",
+      "category": "video"
+    },
+    {
+      "id": "a4-paper",
+      "name": "A4 紙張",
+      "width": 2480,
+      "height": 3508,
+      "description": "適合列印的 A4 紙張尺寸 (300 DPI)",
+      "category": "print"
+    },
+    {
+      "id": "business-card",
+      "name": "名片",
+      "width": 1050,
+      "height": 600,
+      "description": "適合名片的標準尺寸 (300 DPI)",
+      "category": "print"
+    },
+    {
+      "id": "web-banner",
+      "name": "網頁橫幅",
+      "width": 1920,
+      "height": 600,
+      "description": "適合網頁橫幅的寬格式",
+      "category": "web"
+    },
+    {
+      "id": "mobile-wallpaper",
+      "name": "手機桌布",
+      "width": 1080,
+      "height": 1920,
+      "description": "適合手機桌布的垂直格式",
+      "category": "mobile"
+    }
+  ],
+  "categories": [
+    {
+      "id": "social-media",
+      "name": "社群媒體",
+      "description": "適合各種社群媒體平台的尺寸"
+    },
+    {
+      "id": "video",
+      "name": "影片平台",
+      "description": "適合影片平台的縮圖和封面"
+    },
+    {
+      "id": "professional",
+      "name": "專業用途",
+      "description": "適合商業和專業用途的尺寸"
+    },
+    {
+      "id": "print",
+      "name": "列印用途",
+      "description": "適合列印的高解析度尺寸"
+    },
+    {
+      "id": "web",
+      "name": "網頁用途",
+      "description": "適合網頁設計的尺寸"
+    },
+    {
+      "id": "mobile",
+      "name": "行動裝置",
+      "description": "適合行動裝置的尺寸"
+    }
+  ],
+  "defaultSettings": {
+    "quality": 90,
+    "format": "jpeg",
+    "maintainAspectRatio": true,
+    "interpolation": "lanczos"
+  },
+  "scenarios": {
+    "success": [
+      {
+        "data": {
+          "resizedImageUrl": "https://picsum.photos/800/600?random=1",
+          "originalSize": {
+            "width": 1920,
+            "height": 1080
+          },
+          "targetSize": {
+            "width": 800,
+            "height": 600
+          },
+          "resizeMode": "crop",
+          "format": "jpeg",
+          "quality": 85,
+          "processingTime": 1500
+        }
+      },
+      {
+        "data": {
+          "resizedImageUrl": "https://picsum.photos/1200/800?random=2",
+          "originalSize": {
+            "width": 1920,
+            "height": 1080
+          },
+          "targetSize": {
+            "width": 1200,
+            "height": 800
+          },
+          "resizeMode": "fit",
+          "format": "png",
+          "quality": 90,
+          "processingTime": 2000
+        }
+      },
+      {
+        "data": {
+          "resizedImageUrl": "https://picsum.photos/1080/1080?random=3",
+          "originalSize": {
+            "width": 1920,
+            "height": 1080
+          },
+          "targetSize": {
+            "width": 1080,
+            "height": 1080
+          },
+          "resizeMode": "crop",
+          "format": "jpeg",
+          "quality": 85,
+          "processingTime": 1800
+        }
+      }
+    ],
+    "error": [
+      {
+        "code": "INVALID_DIMENSIONS",
+        "message": "無效的尺寸參數",
+        "details": "寬度和高度必須大於 0"
+      },
+      {
+        "code": "IMAGE_TOO_LARGE",
+        "message": "圖片尺寸過大",
+        "details": "圖片尺寸不能超過 10000x10000 像素"
+      },
+      {
+        "code": "UNSUPPORTED_FORMAT",
+        "message": "不支援的格式",
+        "details": "不支援的圖片格式"
+      }
+    ]
+  }
+}
+

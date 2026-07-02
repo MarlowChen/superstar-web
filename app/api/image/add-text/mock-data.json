@@ -1,0 +1,120 @@
+{
+  "request_example": {
+    "text": "歡迎使用 AI 圖片編輯器",
+    "font": "Arial",
+    "align": "center",
+    "position": {
+      "x": 50,
+      "y": 30
+    },
+    "imageId": "img_12345",
+    "style": {
+      "fontSize": 24,
+      "color": "#FF6B6B",
+      "bold": true,
+      "italic": false,
+      "underline": false
+    }
+  },
+  "success_response_example": {
+    "success": true,
+    "message": "文字添加成功",
+    "data": {
+      "textId": "text_1703123456789_abc123def",
+      "imageUrl": "https://api.aierone.com/processed/img_12345_text_1703123456789.jpg",
+      "textPosition": {
+        "x": 50,
+        "y": 30
+      },
+      "timestamp": "2023-12-21T10:30:45.123Z",
+      "textStyle": {
+        "font": "Arial",
+        "fontSize": 24,
+        "color": "#FF6B6B",
+        "bold": true,
+        "italic": false,
+        "underline": false,
+        "align": "center"
+      },
+      "processingStats": {
+        "processingTime": 1250,
+        "textLength": 12,
+        "imageSize": "1920x1080"
+      }
+    }
+  },
+  "error_response_example": {
+    "success": false,
+    "message": "處理失敗",
+    "error": {
+      "code": "VALIDATION_ERROR",
+      "details": "文字內容不能為空"
+    }
+  },
+  "status_query_example": {
+    "request": "GET /api/image/add-text?textId=text_1703123456789_abc123def",
+    "response": {
+      "success": true,
+      "message": "查詢成功",
+      "data": {
+        "textId": "text_1703123456789_abc123def",
+        "status": "completed",
+        "progress": 100,
+        "estimatedTime": 0,
+        "timestamp": "2023-12-21T10:30:45.123Z"
+      }
+    }
+  },
+  "common_error_codes": {
+    "VALIDATION_ERROR": "請求資料驗證失敗",
+    "PROCESSING_ERROR": "圖片處理過程中發生錯誤",
+    "INTERNAL_ERROR": "伺服器內部錯誤",
+    "MISSING_PARAMETER": "缺少必要參數",
+    "QUERY_ERROR": "查詢失敗"
+  },
+  "font_options": [
+    "Arial",
+    "Helvetica",
+    "Times New Roman",
+    "Georgia",
+    "Verdana",
+    "Tahoma",
+    "Trebuchet MS",
+    "Impact",
+    "Comic Sans MS",
+    "Courier New"
+  ],
+  "color_palette": [
+    "#FF6B6B",
+    "#4ECDC4",
+    "#45B7D1",
+    "#96CEB4",
+    "#FFEAA7",
+    "#DDA0DD",
+    "#98D8C8",
+    "#F7DC6F",
+    "#BB8FCE",
+    "#85C1E9"
+  ],
+  "position_constraints": {
+    "x": {
+      "min": 0,
+      "max": 100,
+      "description": "水平位置百分比"
+    },
+    "y": {
+      "min": 0,
+      "max": 100,
+      "description": "垂直位置百分比"
+    }
+  },
+  "font_size_constraints": {
+    "min": 12,
+    "max": 72,
+    "description": "字體大小範圍（像素）"
+  },
+  "text_length_constraints": {
+    "max": 200,
+    "description": "文字最大長度（字符）"
+  }
+} 

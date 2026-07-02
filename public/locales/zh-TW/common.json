@@ -1,0 +1,7 @@
+{
+    "welcome": "描述你想要的圖片",
+    "description": "这是一个使用 next-i18next 的示例",
+    "payment_success": "付款成功！積分已添加到您的帳戶",
+    "confirm": "確認"
+  }
+  

@@ -1,0 +1,14 @@
+{
+    "Failed to update language setting": "更新語言設定失敗",
+    "Failed to update language": "更新語言失敗",
+    "Failed to update user settings": "更新使用者設定失敗",
+    "Failed to update settings": "更新設定失敗",
+    "Failed to fetch points": "取得點數失敗",
+    "Failed to fetch user settings": "取得使用者設定失敗：",
+    "Session_expired": "登入逾時，請重新登入。",
+    "Failed to update lora setting": "更新模型設定失敗",
+    "Failed to update lora": "更新模型失敗",
+    "Failed to update theme setting": "更新主題設定失敗",
+    "Failed to update theme": "更新主題失敗",
+    "Failed to update style": "更新風格失敗"
+}

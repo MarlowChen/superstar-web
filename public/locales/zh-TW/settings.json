@@ -1,0 +1,116 @@
+{
+  "title": "設定",
+  "tabs": {
+    "general": "一般與帳戶管理",
+    "orders": "帳單與方案",
+    "service": "服務條款",
+    "privacy": "隱私權政策",
+    "copyright": "著作權政策",
+    "faq": "常見問題",
+    "feedback": "意見回饋"
+  },
+  "user_info": {
+    "username": "用戶名",
+    "email": "電子郵件",
+    "points": "可用點數",
+    "purchase": "購買",
+    "guest": "訪客",
+    "no_email": "未設定電子郵件",
+    "available_credit": "可用次數"
+  },
+  "settings": {
+    "theme": "主題選擇",
+    "language": "語言選擇"
+  },
+  "theme_options": {
+    "system": "系統",
+    "dark": "深色",
+    "light": "淺色"
+  },
+  "language_options": {
+    "auto": "自動偵測"
+  },
+  "placeholder": "請選擇",
+  "please_select": "請選擇",
+  "chinese": "中文",
+  "extra_points": "額外點數",
+  "view": "查看",
+  "select_language": "選擇語言",
+  "developing": "此功能正在開發中...",
+  "document_not_found": "文檔未找到",
+  "success": {
+    "language_updated": "語言設定已更新",
+    "theme_updated": "主題設定已更新"
+  },
+  "order_history": {
+    "title": "訂單歷史",
+    "description": "查看您的所有購買記錄和發票",
+    "loading_orders": "載入訂單中...",
+    "failed_to_load": "無法載入訂單歷史",
+    "retry": "重新載入",
+    "no_orders": "暫無訂單記錄",
+    "no_orders_message": "您還沒有任何購買記錄",
+    "current_subscription": "當前訂閱",
+    "subscription_end_date": "訂閱結束日期",
+    "next_billing": "下次續費",
+    "cancel_subscription": "取消訂閱",
+    "cancel_subscription_message": "確定要取消訂閱嗎？訂閱將在當前計費週期結束時停止。",
+    "cancel": "取消訂閱",
+    "keep_subscription": "保留訂閱",
+    "cancel_success": "訂閱取消成功！將於 {date} 停止續費。",
+    "cancel_failed_with_error": "取消訂閱失敗：{error}",
+    "cancel_failed": "取消訂閱失敗，請稍後再試",
+    "subscription_cancelled_message": "您的訂閱將於 {date} 停止續費。如需重新訂閱將於 {date}後開始，請前往方案頁面。",
+    "plus_plan": "進階方案",
+    "pro_plan": "專業方案",
+    "max_plan": "頂尖方案",
+    "payg_plan": "按量付費方案",
+    "standard_plan": "基本方案",
+    "transaction_type_payg": "按次計費方案",
+    "status_completed": "已完成",
+    "status_pending": "處理中",
+    "status_failed": "失敗",
+    "points": "點數",
+    "payment_date": "付款時間",
+    "invoice_number": "發票編號",
+    "view_receipt": "查看收據",
+    "download_invoice": "下載發票",
+    "unavailable": "無法獲取",
+    "invalid_date": "日期無效",
+    "receipt_unavailable": "收據連結暫時無法使用",
+    "failed_to_open_receipt": "無法開啟收據",
+    "no_invoice": "此訂單沒有發票",
+    "failed_to_download_invoice": "無法下載發票"
+  },
+  "feedback": {
+    "title": "意見回饋",
+    "description": "我們重視您的意見！請告訴我們您的想法、建議或遇到的問題。",
+    "login_required_title": "需要登入",
+    "login_required_message": "為了確保回饋品質並避免垃圾訊息，請先登入您的帳號後再提交意見回饋。",
+    "form": {
+      "category": "回饋分類",
+      "category_placeholder": "請選擇回饋類型",
+      "content": "回饋內容",
+      "content_placeholder": "請詳細描述您的意見、建議或遇到的問題（至少10個字元，最多2000個字元）",
+      "submit": "提交回饋",
+      "submitting": "提交中...",
+      "note": "您的回饋將被安全保存，僅供管理團隊查看與處理。我們會認真對待每一則回饋，並持續改進服務品質。"
+    },
+    "categories": {
+      "bug": "Bug 回報",
+      "feature": "功能建議",
+      "experience": "使用心得",
+      "optimization": "優化建議",
+      "other": "其他"
+    },
+    "validation": {
+      "content_required": "請輸入回饋內容",
+      "content_min_length": "回饋內容至少需要10個字元",
+      "content_max_length": "回饋內容不能超過2000個字元",
+      "category_required": "請選擇回饋分類",
+      "login_required": "請先登入您的帳號"
+    },
+    "submit_success": "回饋提交成功！感謝您的寶貴意見，我們會盡快處理。",
+    "submit_error": "提交失敗，請稍後再試或聯繫客服。"
+  }
+}

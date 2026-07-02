@@ -1,0 +1,15 @@
+{
+  "imageAlt": "{modelTitle} 範例 {index}",
+  "clickToEnlarge": "點擊查看大圖",
+  "view": "查看",
+  "noImagesAvailable": "暫無圖片",
+  "closeLightbox": "關閉圖片查看器",
+  "lightboxImageAlt": "查看器中的圖片 {index}",
+  "previousImage": "上一張圖片",
+  "nextImage": "下一張圖片",
+  "swipeHint": "← 滑動切換圖片 →",
+  "thumbnailAlt": "縮略圖 {index}",
+  "collapse": "收合",
+  "masonry_layout": "瀑布流佈局",
+  "grid_layout": "網格佈局"
+}

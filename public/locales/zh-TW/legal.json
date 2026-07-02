@@ -1,0 +1,14 @@
+{
+  "legal": {
+    "title": "服務條款與隱私權政策",
+    "tabs": {
+      "terms": "服務條款",
+      "privacy": "隱私權政策",
+      "copyright": "著作權政策",
+      "refund": "退款政策",
+      "cookie": "Cookie 政策"
+    },
+    "documentNotFound": "未找到相關文件",
+    "agreeButton": "我已閱讀並同意"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "legal": {
+    "title": "利用規約とプライバシーポリシー",
+    "tabs": {
+      "terms": "利用規約とポリシー",
+      "privacy": "プライバシーポリシー",
+      "copyright": "著作権ポリシー",
+      "refund": "返金ポリシー",
+      "cookie": "Cookieポリシー"
+    },
+    "documentNotFound": "ドキュメントが見つかりません",
+    "agreeButton": "読み、同意しました"
+  }
+}
+
+
+

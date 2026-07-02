@@ -1,0 +1,16 @@
+{
+  "imageAlt": "{modelTitle} の例 {index}",
+  "clickToEnlarge": "クリックして拡大",
+  "view": "表示",
+  "noImagesAvailable": "利用可能な画像がありません",
+  "closeLightbox": "画像ビューアーを閉じる",
+  "lightboxImageAlt": "ビューアー内の画像 {index}",
+  "previousImage": "前の画像",
+  "nextImage": "次の画像",
+  "swipeHint": "← スワイプして画像を切り替え →",
+  "thumbnailAlt": "サムネイル {index}",
+  "collapse": "折りたたむ",
+  "masonry_layout": "メイソンリーレイアウト",
+  "grid_layout": "グリッドレイアウト"
+}
+

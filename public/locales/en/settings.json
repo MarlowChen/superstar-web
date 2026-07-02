@@ -1,0 +1,116 @@
+{
+  "title": "Settings",
+  "tabs": {
+    "general": "General & Account",
+    "orders": "Billing & Plan",
+    "service": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "copyright": "Copyright Policy",
+    "faq": "FAQ",
+    "feedback": "Feedback"
+  },
+  "user_info": {
+    "username": "Username",
+    "email": "Email",
+    "points": "Available Points",
+    "purchase": "Purchase",
+    "guest": "Guest",
+    "no_email": "no email",
+    "available_credit": "credits"
+  },
+  "settings": {
+    "theme": "Theme",
+    "language": "Language"
+  },
+  "theme_options": {
+    "system": "System",
+    "dark": "Dark",
+    "light": "Light"
+  },
+  "language_options": {
+    "auto": "Auto Detect"
+  },
+  "placeholder": "Please select",
+  "please_select": "Please select",
+  "chinese": "Chinese",
+  "extra_points": "Extra Points",
+  "view": "View",
+  "select_language": "Select Language",
+  "developing": "This feature is under development...",
+  "document_not_found": "Document not found",
+  "success": {
+      "language_updated": "Language settings updated",
+      "theme_updated": "Theme settings updated"
+    },
+  "order_history": {
+    "title": "Order History",
+    "description": "View all your purchase records and invoices",
+    "loading_orders": "Loading orders...",
+    "failed_to_load": "Failed to load order history",
+    "retry": "Retry",
+    "no_orders": "No Order History",
+    "no_orders_message": "You haven't made any purchases yet",
+    "current_subscription": "Current Subscription",
+    "subscription_end_date": "Subscription End Date",
+    "next_billing": "Next Billing",
+    "cancel_subscription": "Cancel Subscription",
+    "cancel_subscription_message": "Are you sure you want to cancel your subscription? It will stop at the end of the current billing cycle.",
+    "cancel": "Cancel",
+    "keep_subscription": "Keep Subscription",
+    "cancel_success": "Subscription cancelled successfully! Will stop renewing on {date}.",
+    "cancel_failed_with_error": "Failed to cancel subscription: {error}",
+    "cancel_failed": "Failed to cancel subscription, please try again later",
+    "subscription_cancelled_message": "Your subscription will stop renewing on {date}. To resubscribe, please visit the plans page after {date}.",
+    "plus_plan": "Plus Plan",
+    "pro_plan": "Pro Plan",
+    "max_plan": "Max Plan",
+    "payg_plan": "Pay As You Go",
+    "standard_plan": "Basic Plan",
+    "transaction_type_payg": "Pay as you go",
+    "status_completed": "Completed",
+    "status_pending": "Pending",
+    "status_failed": "Failed",
+    "points": "points",
+    "payment_date": "Payment Date",
+    "invoice_number": "Invoice Number",
+    "view_receipt": "View Receipt",
+    "download_invoice": "Download Invoice",
+    "unavailable": "Unavailable",
+    "invalid_date": "Invalid Date",
+    "receipt_unavailable": "Receipt link is currently unavailable",
+    "failed_to_open_receipt": "Failed to open receipt",
+    "no_invoice": "No invoice available for this order",
+    "failed_to_download_invoice": "Failed to download invoice"
+  },
+  "feedback": {
+    "title": "Feedback",
+    "description": "We value your feedback! Please share your thoughts, suggestions, or any issues you've encountered.",
+    "login_required_title": "Login Required",
+    "login_required_message": "To ensure feedback quality and prevent spam, please login to your account before submitting feedback.",
+    "form": {
+      "category": "Category",
+      "category_placeholder": "Please select feedback type",
+      "content": "Feedback Content",
+      "content_placeholder": "Please describe your feedback, suggestions, or issues in detail (minimum 10 characters, maximum 2000 characters)",
+      "submit": "Submit Feedback",
+      "submitting": "Submitting...",
+      "note": "Your feedback will be securely saved and only visible to the management team for review and processing. We take every feedback seriously and continuously improve our service quality."
+    },
+    "categories": {
+      "bug": "Bug Report",
+      "feature": "Feature Suggestion",
+      "experience": "User Experience",
+      "optimization": "Optimization Suggestion",
+      "other": "Other"
+    },
+    "validation": {
+      "content_required": "Please enter feedback content",
+      "content_min_length": "Feedback content must be at least 10 characters",
+      "content_max_length": "Feedback content cannot exceed 2000 characters",
+      "category_required": "Please select a category",
+      "login_required": "Please login to your account first"
+    },
+    "submit_success": "Feedback submitted successfully! Thank you for your valuable input. We will process it as soon as possible.",
+    "submit_error": "Submission failed. Please try again later or contact support."
+  }
+}

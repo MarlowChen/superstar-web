@@ -1,0 +1,125 @@
+{
+  "request_example": {
+    "imageId": "img_12345",
+    "areas": [
+      {
+        "x": 100,
+        "y": 150,
+        "width": 80,
+        "height": 60
+      },
+      {
+        "x": 300,
+        "y": 200,
+        "width": 120,
+        "height": 90
+      }
+    ],
+    "options": {
+      "brushSize": 20,
+      "feathering": 5,
+      "blendMode": "normal",
+      "tolerance": 30
+    }
+  },
+  "success_response_example": {
+    "success": true,
+    "message": "區域擦除處理成功",
+    "data": {
+      "processedImageUrl": "https://api.aierone.com/processed/erased-img_12345.jpg",
+      "originalImageUrl": "https://api.aierone.com/original/img_12345.jpg",
+      "erasedAreas": [
+        {
+          "x": 100,
+          "y": 150,
+          "width": 80,
+          "height": 60
+        },
+        {
+          "x": 300,
+          "y": 200,
+          "width": 120,
+          "height": 90
+        }
+      ],
+      "processingTime": 1.23,
+      "brushSize": 20,
+      "timestamp": "2023-12-21T10:30:45.123Z"
+    }
+  },
+  "error_response_example": {
+    "success": false,
+    "message": "區域擦除處理失敗",
+    "error": {
+      "code": "PROCESSING_FAILED",
+      "details": "圖片處理過程中發生錯誤"
+    }
+  },
+  "validation_error_example": {
+    "success": false,
+    "message": "缺少擦除區域",
+    "error": {
+      "code": "MISSING_AREAS",
+      "details": "areas 陣列不能為空"
+    }
+  },
+  "invalid_coordinates_error": {
+    "success": false,
+    "message": "區域 0 座標無效",
+    "error": {
+      "code": "INVALID_AREA_COORDINATES",
+      "details": "區域 0 的座標或尺寸無效"
+    }
+  },
+  "brush_size_range": {
+    "min": 1,
+    "max": 100,
+    "default": 20,
+    "description": "筆刷大小範圍（像素）"
+  },
+  "feathering_range": {
+    "min": 0,
+    "max": 20,
+    "default": 5,
+    "description": "羽化範圍（像素）"
+  },
+  "tolerance_range": {
+    "min": 0,
+    "max": 100,
+    "default": 30,
+    "description": "容差範圍（百分比）"
+  },
+  "blend_mode_options": [
+    "normal",
+    "multiply",
+    "screen"
+  ],
+  "common_error_codes": {
+    "MISSING_IMAGE_ID": "缺少圖片ID",
+    "MISSING_AREAS": "缺少擦除區域",
+    "INVALID_AREA_COORDINATES": "區域座標無效",
+    "PROCESSING_FAILED": "處理失敗",
+    "INTERNAL_ERROR": "伺服器內部錯誤"
+  },
+  "area_constraints": {
+    "max_areas": 50,
+    "max_area_size": "1000x1000",
+    "min_area_size": "1x1",
+    "description": "區域限制"
+  },
+  "processing_time_range": {
+    "min": 0.5,
+    "max": 3.0,
+    "description": "處理時間範圍（秒）"
+  },
+  "supported_image_formats": [
+    "JPG",
+    "JPEG",
+    "PNG",
+    "WEBP"
+  ],
+  "max_file_size": {
+    "size": "10MB",
+    "description": "最大檔案大小"
+  }
+} 

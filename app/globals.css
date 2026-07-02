@@ -1,0 +1,200 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f6f7ff;
+  --foreground: #22324a;
+  --app-bg:
+    radial-gradient(circle at 20% 18%, rgba(112, 239, 218, 0.38), transparent 22%),
+    radial-gradient(circle at 78% 18%, rgba(167, 183, 255, 0.34), transparent 26%),
+    radial-gradient(circle at 80% 76%, rgba(171, 133, 255, 0.34), transparent 28%),
+    radial-gradient(circle at 18% 74%, rgba(87, 203, 255, 0.28), transparent 24%),
+    linear-gradient(180deg, #f7f8ff 0%, #eef4ff 48%, #eef1ff 100%);
+  --panel-bg: rgba(255, 255, 255, 0.54);
+  --panel-border: rgba(188, 201, 255, 0.42);
+  --panel-shadow: 0 18px 48px rgba(130, 150, 216, 0.16);
+  --panel-blur: blur(24px);
+}
+
+.dark {
+  --background: #0b1020;
+  --foreground: #ededed;
+  --app-bg:
+    radial-gradient(circle at 18% 16%, rgba(98, 229, 206, 0.22), transparent 22%),
+    radial-gradient(circle at 78% 18%, rgba(124, 159, 255, 0.24), transparent 26%),
+    radial-gradient(circle at 84% 76%, rgba(160, 112, 255, 0.28), transparent 30%),
+    radial-gradient(circle at 24% 78%, rgba(86, 177, 255, 0.18), transparent 24%),
+    linear-gradient(180deg, #0b1020 0%, #11162a 50%, #15152b 100%);
+  --panel-bg: rgba(20, 26, 45, 0.52);
+  --panel-border: rgba(175, 190, 255, 0.14);
+  --panel-shadow: 0 22px 56px rgba(5, 10, 24, 0.38);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --background: #0b1020;
+    --foreground: #ededed;
+    --app-bg:
+      radial-gradient(circle at 18% 16%, rgba(98, 229, 206, 0.22), transparent 22%),
+      radial-gradient(circle at 78% 18%, rgba(124, 159, 255, 0.24), transparent 26%),
+      radial-gradient(circle at 84% 76%, rgba(160, 112, 255, 0.28), transparent 30%),
+      radial-gradient(circle at 24% 78%, rgba(86, 177, 255, 0.18), transparent 24%),
+      linear-gradient(180deg, #0b1020 0%, #11162a 50%, #15152b 100%);
+    --panel-bg: rgba(20, 26, 45, 0.52);
+    --panel-border: rgba(175, 190, 255, 0.14);
+    --panel-shadow: 0 22px 56px rgba(5, 10, 24, 0.38);
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--app-bg);
+  background-attachment: fixed;
+  font-family: Montserrat Light, Arial, Helvetica, sans-serif;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent 38%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.24), transparent 30%);
+  mix-blend-mode: screen;
+  opacity: 0.85;
+  z-index: -1;
+}
+
+.app-glass-panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: var(--panel-blur);
+  -webkit-backdrop-filter: var(--panel-blur);
+}
+
+.app-soft-bg {
+  background: var(--app-bg);
+  background-attachment: fixed;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .content-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #333 transparent;
+  }
+
+  .content-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .content-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .content-scrollbar::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 9999px;
+  }
+
+  .content-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #444;
+  }
+
+  .dark .content-scrollbar {
+    scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
+  }
+
+  .dark .content-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.28);
+  }
+
+  .dark .content-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
+  }
+}
+
+@font-face {
+  font-family: 'Montserrat Light';
+  src: url('/fonts/Montserrat-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Montserrat Medium';
+  src: url('/fonts/Montserrat-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/Inter-Italic-VariableFont_opsz,wght.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'KokuryuTtf';
+  src: url('/fonts/KokuryuTtf.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+/* 透明格子背景（類似 Photoshop） */
+.checkerboard-bg {
+  background-color: #ffffff;
+  background-image: 
+    linear-gradient(45deg, #e0e0e0 25%, transparent 25%),
+    linear-gradient(-45deg, #e0e0e0 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e0e0e0 75%),
+    linear-gradient(-45deg, transparent 75%, #e0e0e0 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
+
+/* 深色模式的透明格子 */
+.dark .checkerboard-bg {
+  background-color: #1a1a1a;
+  background-image: 
+    linear-gradient(45deg, #2a2a2a 25%, transparent 25%),
+    linear-gradient(-45deg, #2a2a2a 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #2a2a2a 75%),
+    linear-gradient(-45deg, transparent 75%, #2a2a2a 75%);
+}
+
+/* 防止 iOS Safari 自動放大輸入框 */
+input, textarea, select {
+  font-size: 16px !important;
+}
+
+/* 或更精確地只針對手機 */
+@media screen and (max-width: 768px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
+/* 防止雙擊放大 */
+* {
+  touch-action: manipulation;
+}
+
+/* 防止觸控時整頁滾動 */
+html, body {
+  overscroll-behavior: none;
+}
+
+/* 編輯器內禁止選取 */
+.editor-container {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}

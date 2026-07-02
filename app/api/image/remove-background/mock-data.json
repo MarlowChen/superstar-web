@@ -1,0 +1,73 @@
+{
+  "request_example": {
+    "imageId": "img_12345",
+    "options": {
+      "quality": "high",
+      "format": "PNG",
+      "keepShadows": true,
+      "enhanceEdges": false
+    }
+  },
+  "success_response_example": {
+    "success": true,
+    "message": "背景移除處理成功",
+    "data": {
+      "processedImageUrl": "https://api.aierone.com/processed/background-removed-img_12345.png",
+      "originalImageUrl": "https://api.aierone.com/original/img_12345.jpg",
+      "processingTime": 2.45,
+      "quality": "high",
+      "format": "PNG",
+      "timestamp": "2023-12-21T10:30:45.123Z"
+    }
+  },
+  "error_response_example": {
+    "success": false,
+    "message": "背景移除處理失敗",
+    "error": {
+      "code": "PROCESSING_FAILED",
+      "details": "圖片處理過程中發生錯誤"
+    }
+  },
+  "validation_error_example": {
+    "success": false,
+    "message": "缺少圖片ID",
+    "error": {
+      "code": "MISSING_IMAGE_ID",
+      "details": "imageId 是必需的"
+    }
+  },
+  "quality_options": [
+    "high"
+  ],
+  "format_options": [
+    "PNG"
+  ],
+  "processing_time_range": {
+    "min": 1.5,
+    "max": 5.0,
+    "description": "處理時間範圍（秒）"
+  },
+  "common_error_codes": {
+    "MISSING_IMAGE_ID": "缺少圖片ID",
+    "INVALID_QUALITY": "無效的品質設定",
+    "INVALID_FORMAT": "無效的格式設定",
+    "PROCESSING_FAILED": "處理失敗",
+    "INTERNAL_ERROR": "伺服器內部錯誤"
+  },
+  "supported_image_formats": [
+    "JPG",
+    "JPEG",
+    "PNG",
+    "WEBP"
+  ],
+  "max_file_size": {
+    "size": "10MB",
+    "description": "最大檔案大小"
+  },
+  "processing_status": {
+    "pending": "等待處理",
+    "processing": "處理中",
+    "completed": "處理完成",
+    "failed": "處理失敗"
+  }
+} 

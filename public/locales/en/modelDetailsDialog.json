@@ -1,0 +1,15 @@
+{
+  "imageAlt": "{modelTitle} Example {index}",
+  "clickToEnlarge": "Click to enlarge",
+  "view": "View",
+  "noImagesAvailable": "No images available",
+  "closeLightbox": "Close image viewer",
+  "lightboxImageAlt": "Image {index} in viewer",
+  "previousImage": "Previous image",
+  "nextImage": "Next image",
+  "swipeHint": "← Swipe to switch images →",
+  "thumbnailAlt": "Thumbnail {index}",
+  "collapse": "Collapse",
+  "masonry_layout": "Masonry Layout",
+  "grid_layout": "Grid Layout"
+}

@@ -1,0 +1,29 @@
+{
+  "status_in_queue": "キュー内の需要",
+  "status_prompt_delivering": "プロンプト配信中",
+  "status_ai_processing": "AIサーバー処理中",
+  "status_generating": "画像生成中",
+  "status_completed": "完了",
+  "current_queue": "現在のキュー",
+  "copied_to_clipboard": "クリップボードにコピーしました",
+  "ai_generated_filename": "AI生成-{{time}}",
+  "ai_image_disclaimer": "AI生成画像は完全に正確ではない場合がありますが、常に予想外の驚きをもたらします。",
+  "no_images_yet": "まだ画像が生成されていません",
+  "start_generating_prompt": "プロンプトを入力して最初の画像を生成しましょう！",
+  "prompt_loading": "プロンプトを読み込み中...",
+  "reaction_failed": "リアクションに失敗しました。しばらくしてから再試行してください。",
+  "just_now": "たった今",
+  "hours_ago": "{{hours}}時間前",
+  "yesterday": "昨日",
+  "completed": "完了",
+  "images": "画像",
+  "copy_prompt": "プロンプトをコピー",
+  "copy": "コピー",
+  "comment_saved": "コメントを保存しました",
+  "comment_deleted": "コメントを削除しました",
+  "comment_failed": "コメント操作に失敗しました。しばらくしてから再試行してください",
+  "click_to_enlarge": "クリックして元のサイズで表示"
+}
+
+
+

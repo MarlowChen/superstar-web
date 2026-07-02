@@ -1,0 +1,116 @@
+{
+  "title": "設定",
+  "tabs": {
+    "general": "一般とアカウント",
+    "orders": "請求とプラン",
+    "service": "利用規約",
+    "privacy": "プライバシーポリシー",
+    "copyright": "著作権ポリシー",
+    "faq": "よくある質問",
+    "feedback": "フィードバック"
+  },
+  "user_info": {
+    "username": "ユーザー名",
+    "email": "メールアドレス",
+    "points": "利用可能なポイント",
+    "purchase": "購入",
+    "guest": "ゲスト",
+    "no_email": "メールなし",
+    "available_credit": "クレジット"
+  },
+  "settings": {
+    "theme": "テーマ",
+    "language": "言語"
+  },
+  "theme_options": {
+    "system": "システム",
+    "dark": "ダーク",
+    "light": "ライト"
+  },
+  "language_options": {
+    "auto": "自動検出"
+  },
+  "placeholder": "選択してください",
+  "please_select": "選択してください",
+  "chinese": "中国語",
+  "extra_points": "追加ポイント",
+  "view": "表示",
+  "select_language": "言語を選択",
+  "developing": "この機能は開発中です...",
+  "document_not_found": "ドキュメントが見つかりません",
+  "success": {
+      "language_updated": "言語設定を更新しました",
+      "theme_updated": "テーマ設定を更新しました"
+    },
+  "order_history": {
+    "title": "注文履歴",
+    "description": "すべての購入記録と請求書を表示",
+    "loading_orders": "注文を読み込み中...",
+    "failed_to_load": "注文履歴の読み込みに失敗しました",
+    "retry": "再試行",
+    "no_orders": "注文履歴がありません",
+    "no_orders_message": "まだ購入記録がありません",
+    "current_subscription": "現在のサブスクリプション",
+    "subscription_end_date": "サブスクリプション終了日",
+    "next_billing": "次の請求",
+    "cancel_subscription": "サブスクリプションをキャンセル",
+    "cancel_subscription_message": "サブスクリプションをキャンセルしてもよろしいですか？現在の請求サイクルの終了時に停止します。",
+    "cancel": "キャンセル",
+    "keep_subscription": "サブスクリプションを維持",
+    "cancel_success": "サブスクリプションのキャンセルに成功しました！{date} に更新を停止します。",
+    "cancel_failed_with_error": "サブスクリプションのキャンセルに失敗しました：{error}",
+    "cancel_failed": "サブスクリプションのキャンセルに失敗しました。しばらくしてから再試行してください",
+    "subscription_cancelled_message": "サブスクリプションは {date} に更新を停止します。再購読するには、{date} 後にプランページにアクセスしてください。",
+    "plus_plan": "Plusプラン",
+    "pro_plan": "Proプラン",
+    "max_plan": "Maxプラン",
+    "payg_plan": "従量課金",
+    "standard_plan": "ベーシックプラン",
+    "transaction_type_payg": "従量課金",
+    "status_completed": "完了",
+    "status_pending": "処理中",
+    "status_failed": "失敗",
+    "points": "ポイント",
+    "payment_date": "支払い日",
+    "invoice_number": "請求書番号",
+    "view_receipt": "領収書を表示",
+    "download_invoice": "請求書をダウンロード",
+    "unavailable": "利用不可",
+    "invalid_date": "無効な日付",
+    "receipt_unavailable": "領収書リンクは現在利用できません",
+    "failed_to_open_receipt": "領収書を開けませんでした",
+    "no_invoice": "この注文には請求書がありません",
+    "failed_to_download_invoice": "請求書のダウンロードに失敗しました"
+  },
+  "feedback": {
+    "title": "フィードバック",
+    "description": "皆様のフィードバックを大切にしています！ご意見、ご提案、または問題がございましたらお知らせください。",
+    "login_required_title": "ログインが必要です",
+    "login_required_message": "フィードバックの品質を確保し、スパムを防ぐため、フィードバックを送信する前にアカウントにログインしてください。",
+    "form": {
+      "category": "カテゴリー",
+      "category_placeholder": "フィードバックの種類を選択してください",
+      "content": "フィードバック内容",
+      "content_placeholder": "ご意見、ご提案、または問題を詳しく説明してください（最低10文字、最大2000文字）",
+      "submit": "フィードバックを送信",
+      "submitting": "送信中...",
+      "note": "フィードバックは安全に保存され、管理チームのみが確認・処理できます。すべてのフィードバックを真剣に受け止め、サービス品質の向上に努めています。"
+    },
+    "categories": {
+      "bug": "バグ報告",
+      "feature": "機能提案",
+      "experience": "使用感",
+      "optimization": "最適化提案",
+      "other": "その他"
+    },
+    "validation": {
+      "content_required": "フィードバック内容を入力してください",
+      "content_min_length": "フィードバック内容は最低10文字必要です",
+      "content_max_length": "フィードバック内容は2000文字を超えることはできません",
+      "category_required": "カテゴリーを選択してください",
+      "login_required": "まずアカウントにログインしてください"
+    },
+    "submit_success": "フィードバックの送信に成功しました！貴重なご意見をありがとうございます。できるだけ早く処理いたします。",
+    "submit_error": "送信に失敗しました。しばらくしてから再試行するか、サポートにお問い合わせください。"
+  }
+}
