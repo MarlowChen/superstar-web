@@ -2,6 +2,20 @@
 
 import React, { useState, useEffect } from "react";
 
+const SAKURA_PARTICLES = Array.from({ length: 12 }, (_, index) => ({
+  left: `${10 + ((index * 17) % 30)}%`,
+  top: `${-10 + ((index * 13) % 50)}%`,
+  animationDelay: `${((index * 7) % 50) / 10}s`,
+  animationDuration: `${8 + ((index * 11) % 12)}s`,
+}));
+
+const PURPLE_PARTICLES = Array.from({ length: 12 }, (_, index) => ({
+  right: `${10 + ((index * 19) % 30)}%`,
+  top: `${-10 + ((index * 11) % 50)}%`,
+  animationDelay: `${((index * 5) % 40) / 10}s`,
+  animationDuration: `${6 + ((index * 7) % 10)}s`,
+}));
+
 const HeroBanner = () => {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -99,9 +113,9 @@ const HeroBanner = () => {
       />
 
       {/* 內層 16:9 容器（維持原本高度與定位基準） */}
-      <div className="relative w-full" style={{ paddingTop: "56.25%" }}>
+      <div className="relative w-full overflow-hidden" style={{ paddingTop: "56.25%" }}>
         {/* 內層內容整體提高層級，蓋在底部淡出之上 */}
-        <div className="absolute inset-0 z-[10]">
+        <div className="absolute inset-0 z-[10] overflow-hidden">
           {/* 背景特效層 */}
           <div className="absolute inset-0">
             {/* 左側粉色光暈 */}
@@ -118,32 +132,22 @@ const HeroBanner = () => {
             />
 
             {/* 櫻花飄落 */}
-            {[...Array(12)].map((_, i) => (
+            {SAKURA_PARTICLES.map((particle, i) => (
               <div
                 key={`sakura-${i}`}
                 className="absolute animate-float-slow"
-                style={{
-                  left: `${10 + Math.random() * 30}%`,
-                  top: `${-10 + Math.random() * 50}%`,
-                  animationDelay: `${Math.random() * 5}s`,
-                  animationDuration: `${8 + Math.random() * 12}s`,
-                }}
+                style={particle}
                 aria-hidden
               >
                 <div className="w-2 h-2 md:w-3 md:h-3 bg-pink-300 rounded-full blur-sm opacity-60" />
               </div>
             ))}
             {/* 紫色粒子 */}
-            {[...Array(12)].map((_, i) => (
+            {PURPLE_PARTICLES.map((particle, i) => (
               <div
                 key={`particle-${i}`}
                 className="absolute animate-float-slow"
-                style={{
-                  right: `${10 + Math.random() * 30}%`,
-                  top: `${-10 + Math.random() * 50}%`,
-                  animationDelay: `${Math.random() * 4}s`,
-                  animationDuration: `${6 + Math.random() * 10}s`,
-                }}
+                style={particle}
                 aria-hidden
               >
                 <div className="w-2 h-2 md:w-3 md:h-3 bg-purple-400 rounded-full blur-sm opacity-50" />

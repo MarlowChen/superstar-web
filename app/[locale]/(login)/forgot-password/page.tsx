@@ -1,8 +1,10 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 type ForgotPasswordResponse = {
   message?: string;
@@ -33,15 +35,12 @@ export default function ForgotPasswordPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL || "https://api.superstar-ai.xyz"}/auth/forgot-password`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ email: email.trim() }),
-        }
-      );
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email: email.trim() }),
+      });
 
       const data = (await response.json().catch(() => ({}))) as ForgotPasswordResponse;
 
@@ -72,34 +71,63 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-custom-logo-purple to-custom-light-purple flex items-center justify-center p-4">
-      <div className="bg-custom-white dark:bg-custom-black rounded-2xl shadow-xl p-8 w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center text-custom-black dark:text-custom-white mb-2">
-          {t("forgot_password")}
-        </h1>
-        <p className="text-center text-custom-black dark:text-custom-light-purple mb-6">
-          {t("forgot_password_description")}
-        </p>
+    <main className="psf-auth">
+      <aside className="psf-auth-pitch" aria-hidden>
+        <div className="psf-auth-glow" />
+        <div className="psf-auth-brand">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/images/logo-small.svg" alt="" width={30} height={30} style={{ width: 30, height: 30 }} />
+          <span>超星AI平台</span>
+        </div>
+        <div className="psf-auth-pitch-body">
+          <h2 className="psf-auth-pitch-title">找回你的創作入口</h2>
+          <p className="psf-auth-pitch-sub">
+            我們會寄出安全連結，讓你重新設定密碼後回到圖片、影片與模板創作流程。
+          </p>
+          <div className="psf-auth-points">
+            <span className="psf-auth-chip">安全驗證</span>
+            <span className="psf-auth-chip">快速回到工作台</span>
+          </div>
+        </div>
+      </aside>
+
+      <section className="psf-auth-panel">
+        <div className="psf-auth-card">
+          <div className="psf-auth-brand-mobile">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/logo-small.svg" alt="超星AI平台" width={28} height={28} style={{ width: 28, height: 28 }} />
+            <span>超星AI平台</span>
+          </div>
+
+          <h1 className="psf-auth-title">{t("forgot_password")}</h1>
+          <p className="psf-auth-subtitle">{t("forgot_password_description")}</p>
+
+          <div className="psf-auth-divider" aria-hidden>
+            <span>{t("email")}</span>
+          </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder={t("email_placeholder_v2")}
-            className="w-full rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-black px-4 py-3 text-custom-black dark:text-custom-white outline-none focus:border-custom-logo-purple"
-            required
-          />
+          <div className="psf-auth-field">
+            <label htmlFor="forgot-email">{t("email")}</label>
+            <input
+              id="forgot-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t("email_placeholder_v2")}
+              required
+            />
+          </div>
 
           {error ? (
-            <p className="text-sm text-red-500">
+            <p className="psf-auth-error">
               {error}
               {retryAfterSec ? ` (${retryAfterSec}s)` : ""}
             </p>
           ) : null}
 
           {successMessage ? (
-            <p className="text-sm text-emerald-600 dark:text-emerald-400">
+            <p className="mb-4 text-sm text-emerald-600 dark:text-emerald-400">
               {successMessage}
             </p>
           ) : null}
@@ -107,20 +135,28 @@ export default function ForgotPasswordPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-xl bg-custom-logo-purple py-3 px-4 font-medium text-white transition hover:bg-custom-logo-purple-hover disabled:cursor-not-allowed disabled:opacity-60"
+            className="psf-auth-submit"
           >
+            {isSubmitting ? <Loader2 className="h-4 w-4 psf-spin" /> : null}
             {submitLabel}
           </button>
         </form>
 
-        <button
-          type="button"
-          onClick={() => router.push(`/${locale}/login`)}
-          className="mt-5 w-full text-sm font-medium text-custom-logo-purple transition hover:opacity-80"
-        >
-          {t("back_to_login")}
-        </button>
-      </div>
-    </div>
+          <p className="psf-auth-foot">
+            <button
+              type="button"
+              onClick={() => router.push(`/${locale}/login`)}
+              className="psf-auth-foot-link"
+            >
+              {t("back_to_login")}
+            </button>
+          </p>
+
+          <Link href={`/${locale}`} className="psf-auth-back">
+            ← 返回首頁
+          </Link>
+        </div>
+      </section>
+    </main>
   );
 }

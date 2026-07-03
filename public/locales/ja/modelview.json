@@ -46,6 +46,7 @@
   "show_less": "折りたたむ",
   "no_published_images": "公開された画像がありません",
   "start_creating_hint": "作成を開始して、ここに画像を表示します",
+  "fetch_images_failed": "画像を一時的に読み込めません",
   "images_downloaded_success": "画像のダウンロードに成功しました！",
   "images_download_failed": "画像のダウンロードに失敗しました",
   "download_all": "すべてダウンロード",
@@ -54,4 +55,3 @@
   "original_image_hint": "元の画像 - クリックして拡大",
   "generated_image": "生成された画像"
 }
-

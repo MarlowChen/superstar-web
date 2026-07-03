@@ -177,7 +177,7 @@ function FullscreenPitchOverlay({
 // =================== 主頁面 ===================
 export default function PSFYoursPage() {
   // const { user } = useAuth();
-  const t = useTranslations("psfyours");
+  const t = useTranslations("aieroneyours");
 
   // —— 生成相關狀態 —— //
   // const [isGenerating, setIsGenerating] = useState<boolean>(false);

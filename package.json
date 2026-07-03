@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node server.js",
+    "dev": "next dev -p 3000",
+    "dev:https": "node server.js",
     "build": "next build",
     "postbuild": "next-sitemap",
     "start": "NODE_ENV=production node server.js",

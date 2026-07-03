@@ -196,24 +196,24 @@ export default function GalleryContent({
 
   return (
     <main
-      className="min-h-screen bg-custom-gray dark:bg-custom-gray-dark px-4 pt-8 overflow-y-auto"
+      className="h-full min-h-0 overflow-y-auto bg-custom-gray px-4 pt-4 dark:bg-custom-gray-dark md:pt-8"
       ref={messagesContainerRef}
       onScroll={handleScroll}
     >
-      <div className="relative mx-auto flex min-h-[calc(100vh-4rem)] h-full w-full max-w-6xl flex-1 flex-col md:px-2">
+      <div className="relative mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-6xl flex-1 flex-col md:px-2">
         {shouldShowNewConversationHero ? (
-          <div className="flex min-h-[calc(100vh-6rem)] flex-1 flex-col items-center justify-center px-4 pb-[10vh]">
-            <div className="mb-6 w-full max-w-4xl">
+          <div className="flex min-h-[calc(100dvh-6rem)] flex-1 flex-col items-center justify-start px-1 pb-10 pt-10 sm:px-4 md:justify-center md:pb-[10dvh] md:pt-0">
+            <div className="mb-5 w-full max-w-4xl md:mb-6">
               <div className="mx-auto max-w-2xl">
                 <div className="mb-4 flex items-center gap-3">
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#9ee3ff] to-[#159cff] text-[#07121d] shadow-[0_12px_34px_rgba(21,156,255,0.24)]">
                     <Sparkles className="h-5 w-5" />
                   </div>
-                  <div className="text-2xl font-semibold tracking-[-0.04em] text-[#10243a] dark:text-white">
+                  <div className="text-2xl font-semibold tracking-normal text-[#10243a] dark:text-white">
                     {displayName}，你好
                   </div>
                 </div>
-                <h1 className="text-4xl font-semibold tracking-[-0.055em] text-[#10243a] dark:text-white md:text-5xl">
+                <h1 className="text-4xl font-semibold tracking-normal text-[#10243a] dark:text-white md:text-5xl">
                   你想從哪裡著手？
                 </h1>
               </div>
@@ -257,7 +257,7 @@ export default function GalleryContent({
             </div>
           </div>
         ) : (
-          <div className="w-full max-w-5xl h-full flex flex-col transition-all duration-300 ease-in-out">
+          <div className="flex h-full min-h-0 w-full max-w-5xl flex-col transition-all duration-300 ease-in-out">
             <div className="flex-1 text-custom-white">
               <div className="w-full h-full z-0">
                 <div className="p-4 space-y-4 relative">

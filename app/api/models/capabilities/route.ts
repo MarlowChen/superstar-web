@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import {
+  isMockAuthEnabled,
+  MOCK_MODEL_CAPABILITIES,
+  pickUsableAuthToken,
+} from "@/app/lib/mockAuth";
 
 export async function GET(req: NextRequest) {
-  const token =
-    cookies().get("payload-token")?.value ||
-    cookies().get("auth-token")?.value;
+  if (isMockAuthEnabled()) {
+    return NextResponse.json(MOCK_MODEL_CAPABILITIES);
+  }
+
+  const cookieStore = cookies();
+  const token = pickUsableAuthToken(
+    cookieStore.get("payload-token")?.value,
+    cookieStore.get("auth-token")?.value
+  );
 
   const backendUrl = process.env.NEXT_PUBLIC_SERVER_URL;
   if (!backendUrl) {

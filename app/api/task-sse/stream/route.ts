@@ -1,13 +1,63 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import {
+  createMockGenerationTask,
+  isMockAuthEnabled,
+  pickUsableAuthToken,
+} from "@/app/lib/mockAuth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
-  const token =
-    cookies().get("payload-token")?.value ||
-    cookies().get("auth-token")?.value;
+  if (isMockAuthEnabled()) {
+    const taskId = req.nextUrl.searchParams.get("taskId") || "mock-image-1-local";
+    const task = createMockGenerationTask(taskId);
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        const enqueue = (event: string, data: unknown, id: string) => {
+          controller.enqueue(
+            encoder.encode(
+              `id: ${id}\nevent: ${event}\ndata: ${JSON.stringify(data)}\n\n`
+            )
+          );
+        };
+
+        enqueue("connected", { taskId }, `${taskId}-connected`);
+        enqueue(
+          "generation.progress",
+          {
+            taskId,
+            phase: "completed",
+            status: "completed",
+            expectedCount: task.expectedCount,
+            resultCount: task.resultCount,
+            progressPercent: 100,
+          },
+          `${taskId}-progress`
+        );
+        enqueue("task_finished", task, `${taskId}-finished`);
+        controller.close();
+      },
+    });
+
+    return new NextResponse(stream, {
+      status: 200,
+      headers: {
+        "content-type": "text/event-stream",
+        "cache-control": "no-cache, no-transform",
+        connection: "keep-alive",
+        "x-accel-buffering": "no",
+      },
+    });
+  }
+
+  const cookieStore = cookies();
+  const token = pickUsableAuthToken(
+    cookieStore.get("payload-token")?.value,
+    cookieStore.get("auth-token")?.value
+  );
 
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

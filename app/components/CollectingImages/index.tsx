@@ -192,6 +192,22 @@ const CollectedImages: React.FC<CollectedImagesProps> = ({ type = "user" }) => {
   const isFirstRender = useRef(true);
   const { setScrollY } = useScroll();
   const containerRef = useRef<HTMLDivElement>(null);
+  const pageCopy = {
+    label: lng === "zh-TW" ? "Saved" : lng === "ja" ? "Saved" : "Saved",
+    title: lng === "zh-TW" ? "我的典藏" : lng === "ja" ? "保存済み" : "Saved",
+    subtitle:
+      lng === "zh-TW"
+        ? "收藏喜歡的生成結果，方便之後回看提示詞、下載或延伸創作。"
+        : lng === "ja"
+          ? "気に入った生成結果を保存し、あとでプロンプト確認やダウンロードに使えます。"
+          : "Keep favorite generations here so you can revisit prompts, download, or build on them.",
+    countLabel:
+      lng === "zh-TW"
+        ? "個收藏"
+        : lng === "ja"
+          ? "件の保存"
+          : "saved",
+  };
 
   const handleScroll = () => {
     const container = containerRef.current;
@@ -538,11 +554,27 @@ const CollectedImages: React.FC<CollectedImagesProps> = ({ type = "user" }) => {
 
   return (
     <div
-      className="content-scrollbar min-h-screen overflow-y-auto bg-custom-gray px-4 pb-[9rem] pt-8 dark:bg-[#120f16]"
+      className="content-scrollbar min-h-screen overflow-y-auto bg-custom-gray px-4 pb-[9rem] pt-20 dark:bg-[#120f16] md:pt-8"
       ref={containerRef}
       onScroll={handleScroll}
     >
       <div className="relative mx-auto max-w-6xl px-2 py-6 sm:px-4 lg:px-6">
+        <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div className="min-w-0">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8b7fa5] dark:text-[#887c9a]">
+              {pageCopy.label}
+            </div>
+            <h1 className="mt-2 text-3xl font-semibold tracking-normal text-[#2f2740] dark:text-[#f3effb]">
+              {pageCopy.title}
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#6f6383] dark:text-[#b9aec8]">
+              {pageCopy.subtitle}
+            </p>
+          </div>
+          <div className="inline-flex w-fit rounded-full border border-[#e6dff0] bg-white/70 px-3 py-1.5 text-xs font-medium text-[#6f6383] shadow-sm dark:border-white/10 dark:bg-white/[0.05] dark:text-[#cfc4df]">
+            {collectedImages.length} {pageCopy.countLabel}
+          </div>
+        </div>
         {collectedImages.length === 0 && !loading ? (
           <EmptyState />
         ) : (
@@ -584,6 +616,8 @@ const CollectedImages: React.FC<CollectedImagesProps> = ({ type = "user" }) => {
                           src={mediaUrl}
                           alt={`Collected image`}
                           fill
+                          sizes="(min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw"
+                          priority={index < 2}
                           className="object-cover transition-transform duration-300 group-hover:scale-105"
                         />
                       )}

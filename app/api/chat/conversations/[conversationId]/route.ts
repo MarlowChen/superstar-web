@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { isMockAuthEnabled, pickUsableAuthToken } from "@/app/lib/mockAuth";
 
 type RouteContext = {
   params: {
@@ -8,9 +9,23 @@ type RouteContext = {
 };
 
 export async function DELETE(_request: NextRequest, context: RouteContext) {
-  const token =
-    cookies().get("payload-token")?.value ||
-    cookies().get("auth-token")?.value;
+  if (isMockAuthEnabled()) {
+    const conversationId = String(context.params.conversationId || "").trim();
+    if (!conversationId) {
+      return NextResponse.json(
+        { error: "conversationId is required" },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({ ok: true, id: conversationId });
+  }
+
+  const cookieStore = cookies();
+  const token = pickUsableAuthToken(
+    cookieStore.get("payload-token")?.value,
+    cookieStore.get("auth-token")?.value
+  );
 
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

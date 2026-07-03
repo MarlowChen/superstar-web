@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import {
+  createMockGenerationTask,
+  isMockAuthEnabled,
+  pickUsableAuthToken,
+} from "@/app/lib/mockAuth";
 
 type RouteContext = {
   params: {
@@ -8,9 +13,21 @@ type RouteContext = {
 };
 
 async function proxyTaskRequest(req: NextRequest, context: RouteContext) {
-  const token =
-    cookies().get("payload-token")?.value ||
-    cookies().get("auth-token")?.value;
+  if (isMockAuthEnabled()) {
+    const [taskId] = context.params.path;
+
+    if (!taskId) {
+      return NextResponse.json({ error: "Task id is required" }, { status: 400 });
+    }
+
+    return NextResponse.json(createMockGenerationTask(taskId));
+  }
+
+  const cookieStore = cookies();
+  const token = pickUsableAuthToken(
+    cookieStore.get("payload-token")?.value,
+    cookieStore.get("auth-token")?.value
+  );
 
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -1,8 +1,10 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 type ResetPasswordResponse = {
   message?: string;
@@ -41,19 +43,16 @@ export default function ResetPasswordPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL || "https://api.superstar-ai.xyz"}/auth/reset-password`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            token,
-            password,
-            confirmPassword,
-          }),
-        }
-      );
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          token,
+          password,
+          confirmPassword,
+        }),
+      });
 
       const data = (await response.json().catch(() => ({}))) as ResetPasswordResponse;
 
@@ -87,37 +86,69 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-custom-logo-purple to-custom-light-purple flex items-center justify-center p-4">
-      <div className="bg-custom-white dark:bg-custom-black rounded-2xl shadow-xl p-8 w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center text-custom-black dark:text-custom-white mb-2">
-          {t("reset_password_title")}
-        </h1>
-        <p className="text-center text-custom-black dark:text-custom-light-purple mb-6">
-          {t("reset_password_description")}
-        </p>
+    <main className="psf-auth">
+      <aside className="psf-auth-pitch" aria-hidden>
+        <div className="psf-auth-glow" />
+        <div className="psf-auth-brand">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/images/logo-small.svg" alt="" width={30} height={30} style={{ width: 30, height: 30 }} />
+          <span>超星AI平台</span>
+        </div>
+        <div className="psf-auth-pitch-body">
+          <h2 className="psf-auth-pitch-title">設定新的安全密碼</h2>
+          <p className="psf-auth-pitch-sub">
+            完成重設後，你可以用新密碼繼續管理作品、模板與 AI 生成任務。
+          </p>
+          <div className="psf-auth-points">
+            <span className="psf-auth-chip">帳號保護</span>
+            <span className="psf-auth-chip">自動返回登入</span>
+          </div>
+        </div>
+      </aside>
+
+      <section className="psf-auth-panel">
+        <div className="psf-auth-card">
+          <div className="psf-auth-brand-mobile">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/logo-small.svg" alt="超星AI平台" width={28} height={28} style={{ width: 28, height: 28 }} />
+            <span>超星AI平台</span>
+          </div>
+
+          <h1 className="psf-auth-title">{t("reset_password_title")}</h1>
+          <p className="psf-auth-subtitle">{t("reset_password_description")}</p>
+
+          <div className="psf-auth-divider" aria-hidden>
+            <span>{t("password")}</span>
+          </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder={t("new_password_placeholder")}
-            className="w-full rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-black px-4 py-3 text-custom-black dark:text-custom-white outline-none focus:border-custom-logo-purple"
-            required
-          />
+          <div className="psf-auth-field">
+            <label htmlFor="new-password">{t("new_password_placeholder")}</label>
+            <input
+              id="new-password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={t("new_password_placeholder")}
+              required
+            />
+          </div>
 
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder={t("confirm_new_password_placeholder")}
-            className="w-full rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-black px-4 py-3 text-custom-black dark:text-custom-white outline-none focus:border-custom-logo-purple"
-            required
-          />
+          <div className="psf-auth-field">
+            <label htmlFor="confirm-new-password">{t("confirm_new_password_placeholder")}</label>
+            <input
+              id="confirm-new-password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder={t("confirm_new_password_placeholder")}
+              required
+            />
+          </div>
 
-          {error ? <p className="text-sm text-red-500">{error}</p> : null}
+          {error ? <p className="psf-auth-error">{error}</p> : null}
           {successMessage ? (
-            <p className="text-sm text-emerald-600 dark:text-emerald-400">
+            <p className="mb-4 text-sm text-emerald-600 dark:text-emerald-400">
               {successMessage}
             </p>
           ) : null}
@@ -125,20 +156,28 @@ export default function ResetPasswordPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-xl bg-custom-logo-purple py-3 px-4 font-medium text-white transition hover:bg-custom-logo-purple-hover disabled:cursor-not-allowed disabled:opacity-60"
+            className="psf-auth-submit"
           >
+            {isSubmitting ? <Loader2 className="h-4 w-4 psf-spin" /> : null}
             {submitLabel}
           </button>
         </form>
 
-        <button
-          type="button"
-          onClick={() => router.push(`/${locale}/login`)}
-          className="mt-5 w-full text-sm font-medium text-custom-logo-purple transition hover:opacity-80"
-        >
-          {t("back_to_login")}
-        </button>
-      </div>
-    </div>
+          <p className="psf-auth-foot">
+            <button
+              type="button"
+              onClick={() => router.push(`/${locale}/login`)}
+              className="psf-auth-foot-link"
+            >
+              {t("back_to_login")}
+            </button>
+          </p>
+
+          <Link href={`/${locale}`} className="psf-auth-back">
+            ← 返回首頁
+          </Link>
+        </div>
+      </section>
+    </main>
   );
 }

@@ -159,6 +159,26 @@ const PublishedImages: React.FC = () => {
   >({});
   const { setScrollY } = useScroll();
   const containerRef = useRef<HTMLDivElement>(null);
+  const pageCopy = {
+    label: lng === "zh-TW" ? "Library" : lng === "ja" ? "Library" : "Library",
+    title: lng === "zh-TW" ? "我的圖庫" : lng === "ja" ? "マイギャラリー" : "My Library",
+    subtitle:
+      lng === "zh-TW"
+        ? "快速回到已生成的圖片與影片，複製提示詞、下載或繼續編輯。"
+        : lng === "ja"
+          ? "生成済みの画像や動画を見つけて、プロンプトのコピーやダウンロードができます。"
+          : "Find generated images and videos, copy prompts, download, or continue editing.",
+    countLabel:
+      lng === "zh-TW"
+        ? "個作品"
+        : lng === "ja"
+          ? "件の作品"
+          : "items",
+  };
+  const publishedImageCount = publishedImages.reduce(
+    (sum, group) => sum + group.images.length,
+    0
+  );
 
   const handleScroll = () => {
     const container = containerRef.current;
@@ -697,16 +717,32 @@ const PublishedImages: React.FC = () => {
 
   return (
     <div
-      className="content-scrollbar min-h-screen overflow-y-auto bg-custom-gray px-4 pb-[9rem] pt-8 dark:bg-[#120f16]"
+      className="content-scrollbar min-h-screen overflow-y-auto bg-custom-gray px-4 pb-[9rem] pt-20 dark:bg-[#120f16] md:pt-8"
       ref={containerRef}
       onScroll={handleScroll}
     >
       <div className="relative mx-auto max-w-6xl px-2 py-6 sm:px-4 lg:px-6">
+        <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div className="min-w-0">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8b7fa5] dark:text-[#887c9a]">
+              {pageCopy.label}
+            </div>
+            <h1 className="mt-2 text-3xl font-semibold tracking-normal text-[#2f2740] dark:text-[#f3effb]">
+              {pageCopy.title}
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#6f6383] dark:text-[#b9aec8]">
+              {pageCopy.subtitle}
+            </p>
+          </div>
+          <div className="inline-flex w-fit rounded-full border border-[#e6dff0] bg-white/70 px-3 py-1.5 text-xs font-medium text-[#6f6383] shadow-sm dark:border-white/10 dark:bg-white/[0.05] dark:text-[#cfc4df]">
+            {publishedImageCount} {pageCopy.countLabel}
+          </div>
+        </div>
         {publishedImages.length === 0 && !loading ? (
           <EmptyState />
         ) : (
           <div className="space-y-10">
-            {publishedImages.map((group) => (
+            {publishedImages.map((group, groupIndex) => (
               <div
                 key={group.taskId}
                 className="space-y-4"
@@ -828,6 +864,8 @@ const PublishedImages: React.FC = () => {
                                 src={image.url}
                                 alt={t("generated_image")}
                                 fill
+                                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
+                                priority={groupIndex < 2 && index < 2}
                                 className="object-cover transition-transform duration-300 group-hover:scale-105"
                               />
                             )}
@@ -899,14 +937,14 @@ const PublishedImages: React.FC = () => {
                             </div>
 
                             <div className="absolute inset-x-0 bottom-0">
-                              <div className="flex items-center justify-center gap-2 bg-black/10 px-3 py-1.5 backdrop-blur-[2px] transition-all duration-200 group-hover:bg-black/18 group-hover:backdrop-blur-[4px]">
+                              <div className="grid grid-cols-4 items-center gap-0.5 bg-black/10 px-1 py-1 backdrop-blur-[2px] transition-all duration-200 group-hover:bg-black/18 group-hover:backdrop-blur-[4px] md:flex md:justify-center md:gap-2 md:px-3 md:py-1.5">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleReaction(image.id, "like");
                                   }}
                                   disabled={!isPremium}
-                                  className={`flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium transition-all duration-200 ${!isPremium
+                                  className={`flex min-w-0 items-center justify-center gap-0.5 rounded-full px-1 py-1 text-[10px] font-medium transition-all duration-200 md:gap-1 md:px-2 md:text-[11px] ${!isPremium
                                       ? "text-white/35 cursor-not-allowed"
                                       : image.userReaction.like
                                         ? "bg-white/10 text-blue-300"
@@ -915,10 +953,10 @@ const PublishedImages: React.FC = () => {
                                   title={t("like_image")}
                                 >
                                   <ThumbsUp
-                                    className={`h-3.5 w-3.5 ${image.userReaction.like ? "fill-current" : ""
+                                    className={`h-3 w-3 shrink-0 md:h-3.5 md:w-3.5 ${image.userReaction.like ? "fill-current" : ""
                                       }`}
                                   />
-                                  <span>{image.reactions.likes}</span>
+                                  <span className="min-w-0 leading-none">{image.reactions.likes}</span>
                                 </button>
 
                                 <button
@@ -927,7 +965,7 @@ const PublishedImages: React.FC = () => {
                                     handleReaction(image.id, "dislike");
                                   }}
                                   disabled={!isPremium}
-                                  className={`flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium transition-all duration-200 ${!isPremium
+                                  className={`flex min-w-0 items-center justify-center gap-0.5 rounded-full px-1 py-1 text-[10px] font-medium transition-all duration-200 md:gap-1 md:px-2 md:text-[11px] ${!isPremium
                                       ? "text-white/35 cursor-not-allowed"
                                       : image.userReaction.dislike
                                         ? "bg-white/10 text-red-300"
@@ -936,12 +974,12 @@ const PublishedImages: React.FC = () => {
                                   title={t("dislike_image")}
                                 >
                                   <ThumbsDown
-                                    className={`h-3.5 w-3.5 ${image.userReaction.dislike
+                                    className={`h-3 w-3 shrink-0 md:h-3.5 md:w-3.5 ${image.userReaction.dislike
                                         ? "fill-current"
                                         : ""
                                       }`}
                                   />
-                                  <span>{image.reactions.dislikes}</span>
+                                  <span className="min-w-0 leading-none">{image.reactions.dislikes}</span>
                                 </button>
 
                                 <button
@@ -950,7 +988,7 @@ const PublishedImages: React.FC = () => {
                                     handleCollectReaction(image.id);
                                   }}
                                   disabled={!isPremium}
-                                  className={`flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium transition-all duration-200 ${!isPremium
+                                  className={`flex min-w-0 items-center justify-center gap-0.5 rounded-full px-1 py-1 text-[10px] font-medium transition-all duration-200 md:gap-1 md:px-2 md:text-[11px] ${!isPremium
                                       ? "text-white/35 cursor-not-allowed"
                                       : image.userReaction.collecting
                                         ? "bg-white/10 text-pink-300"
@@ -959,12 +997,12 @@ const PublishedImages: React.FC = () => {
                                   title={t("collect_image")}
                                 >
                                   <Heart
-                                    className={`h-3.5 w-3.5 ${image.userReaction.collecting
+                                    className={`h-3 w-3 shrink-0 md:h-3.5 md:w-3.5 ${image.userReaction.collecting
                                         ? "fill-current"
                                         : ""
                                       }`}
                                   />
-                                  <span>{image.reactions.collections || 0}</span>
+                                  <span className="min-w-0 leading-none">{image.reactions.collections || 0}</span>
                                 </button>
 
                                 <div className="md:hidden">
@@ -983,6 +1021,7 @@ const PublishedImages: React.FC = () => {
                                     isMobile={true}
                                     disabled={!isPremium}
                                     title={t("share_image")}
+                                    className="w-full px-1"
                                   />
                                 </div>
                               </div>

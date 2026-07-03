@@ -46,12 +46,13 @@ const DrawerModelSelector = forwardRef<
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
+  if (!isOpen) {
+    return null;
+  }
+
   return (
     <div
-      className={`fixed inset-0 z-50 transition-opacity duration-200 ${
-        isOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
-      }`}
-      aria-hidden={!isOpen}
+      className="fixed inset-0 z-50 pointer-events-auto opacity-100 transition-opacity duration-200"
     >
       <div
         className="absolute inset-0 bg-black/55 backdrop-blur-sm"
@@ -64,11 +65,7 @@ const DrawerModelSelector = forwardRef<
           role="dialog"
           aria-modal="true"
           aria-label={selectModelTitle}
-          className={`relative flex h-[min(88vh,860px)] w-full max-w-6xl flex-col overflow-hidden rounded-[28px] border border-white/50 bg-[#f7fbff] shadow-[0_28px_80px_rgba(15,39,61,0.28)] transition-all duration-200 dark:border-white/10 dark:bg-[#0f1822] ${
-            isOpen
-              ? "translate-y-0 scale-100 opacity-100"
-              : "translate-y-4 scale-[0.98] opacity-0"
-          }`}
+          className="relative flex h-[min(88vh,860px)] w-full max-w-6xl translate-y-0 scale-100 flex-col overflow-hidden rounded-[28px] border border-white/50 bg-[#f7fbff] opacity-100 shadow-[0_28px_80px_rgba(15,39,61,0.28)] transition-all duration-200 dark:border-white/10 dark:bg-[#0f1822]"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top_left,rgba(73,201,255,0.22),transparent_56%),linear-gradient(180deg,rgba(255,255,255,0.88),rgba(255,255,255,0))] dark:bg-[radial-gradient(circle_at_top_left,rgba(73,201,255,0.18),transparent_56%),linear-gradient(180deg,rgba(15,24,34,0.9),rgba(15,24,34,0))]" />
@@ -76,7 +73,7 @@ const DrawerModelSelector = forwardRef<
           <div className="relative z-10 flex items-center justify-between border-b border-[#d7e7f3] px-5 py-4 dark:border-white/10 sm:px-6">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#6a91af] dark:text-[#7fb8d8]">{modelGalleryTitle}</p>
-              <h2 className="mt-1 text-2xl font-semibold tracking-[-0.03em] text-[#16324a] dark:text-[#eef8ff]">
+              <h2 className="mt-1 text-2xl font-semibold tracking-normal text-[#16324a] dark:text-[#eef8ff]">
                 {selectModelTitle}
               </h2>
             </div>

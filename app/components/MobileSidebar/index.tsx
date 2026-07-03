@@ -396,14 +396,15 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({
               style={{ flexDirection: "row", gap: 14 }}
             >
               <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center">
-                <Image
-                  src="/images/logo-small.svg"
-                  alt="超星AI平台"
-                  width={28}
-                  height={28}
-                  className="block object-contain"
-                  priority
-                />
+	                <Image
+	                  src="/images/logo-small.svg"
+	                  alt="超星AI平台"
+	                  width={25}
+	                  height={28}
+	                  className="block object-contain"
+	                  style={{ width: "auto", height: 28 }}
+	                  priority
+	                />
               </span>
               <span className="text-[15px] font-bold leading-none text-[#22324a] dark:text-white">
                 超星AI平台
@@ -411,6 +412,13 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({
             </Link>
             <button
               onClick={toggleSidebar}
+              aria-label={
+                lng === "zh-TW"
+                  ? "關閉選單"
+                  : lng === "ja"
+                    ? "メニューを閉じる"
+                    : "Close menu"
+              }
               className="rounded-xl p-2 text-[#89a0b5] transition hover:bg-[#ebf4fb] hover:text-[#10243a] dark:text-[#6f8ba6] dark:hover:bg-[#132131] dark:hover:text-white"
             >
               <X size={20} />
@@ -433,7 +441,7 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({
                   />
                 }
                 label={t("home")}
-                href={`/${lng}`}
+                href="/drawing"
               />
 
               {user && (

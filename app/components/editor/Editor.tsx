@@ -109,6 +109,7 @@ useEffect(() => {
       <header className="flex items-center justify-between px-4 py-3 border-b border-neutral-800 shrink-0">
         <button
           onClick={onBack}
+          aria-label="返回"
           className="p-2 -ml-2 text-neutral-300 hover:text-white"
         >
           <ChevronLeft className="w-5 h-5" />
@@ -120,6 +121,7 @@ useEffect(() => {
           <div ref={presetDropdownRef} className="relative">
             <button
               onClick={() => setPresetOpen(!presetOpen)}
+              aria-label="選擇畫布尺寸"
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-neutral-300 hover:text-white hover:bg-neutral-800 transition"
             >
               <span>{currentPreset?.name ?? project.canvasPresetId}</span>
@@ -165,6 +167,8 @@ useEffect(() => {
         </div>
         <button
           onClick={onExport}
+          aria-label="匯出專案檔"
+          title="匯出專案檔"
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500 text-white text-sm font-medium hover:bg-blue-600"
         >
           <Share2 className="w-4 h-4" />

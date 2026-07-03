@@ -22,12 +22,14 @@ export const TextEditSheet: React.FC = () => {
   const clip = editingId
     ? project.tracks.flatMap(t => t.clips).find(c => c.id === editingId)
     : null;
+  const clipId = clip?.id;
+  const clipText = clip?.text;
   
   const [text, setText] = useState('');
   
   useEffect(() => {
-    if (clip) setText(clip.text ?? '');
-  }, [clip?.id]);
+    if (clipId) setText(clipText ?? '');
+  }, [clipId, clipText]);
   
   if (!clip) return null;
   
@@ -45,12 +47,12 @@ export const TextEditSheet: React.FC = () => {
   };
 
   return (
-    <div className="pointer-events-none fixed right-4 top-20 z-40 flex max-h-[calc(100vh-10rem)] w-[20rem] justify-end">
+    <div className="pointer-events-none fixed left-3 right-3 top-[4.75rem] z-40 flex max-h-[42vh] w-auto justify-center sm:left-auto sm:right-4 sm:top-20 sm:max-h-[calc(100vh-10rem)] sm:w-[20rem] sm:justify-end">
       <div className="pointer-events-auto flex w-full flex-col overflow-hidden rounded-2xl border border-neutral-700 bg-neutral-900/95 shadow-2xl backdrop-blur">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-neutral-800 px-4 py-3">
           <h3 className="text-white font-semibold text-sm">文字設定</h3>
-          <button onClick={close} className="p-1 text-neutral-400 hover:text-white">
+          <button onClick={close} aria-label="關閉文字設定" className="p-1 text-neutral-400 hover:text-white">
             <X className="w-4 h-4" />
           </button>
         </div>

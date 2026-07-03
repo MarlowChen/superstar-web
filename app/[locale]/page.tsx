@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 
 import LandingHome from "@/app/components/Homepage/LandingHome";
 import { getPageMetadata } from "@/app/lib/metadata";
+import { pickUsableAuthToken } from "@/app/lib/mockAuth";
 
 type HomePageProps = {
   params: { locale: string };
@@ -17,7 +18,10 @@ export default async function Page({ params }: HomePageProps) {
   const locale = params.locale;
   const cookieStore = cookies();
   const hasAuthCookie = Boolean(
-    cookieStore.get("payload-token")?.value || cookieStore.get("auth-token")?.value
+    pickUsableAuthToken(
+      cookieStore.get("payload-token")?.value,
+      cookieStore.get("auth-token")?.value
+    )
   );
 
   return (

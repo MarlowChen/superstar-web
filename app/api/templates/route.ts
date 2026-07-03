@@ -1,7 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import {
+  isMockAuthEnabled,
+  MOCK_TEMPLATES,
+  pickUsableAuthToken,
+} from "@/app/lib/mockAuth";
 
 export async function GET(req: NextRequest) {
+  if (isMockAuthEnabled()) {
+    const category = req.nextUrl.searchParams.get("category");
+    const docs = MOCK_TEMPLATES.filter((template) =>
+      category ? template.category === category : true
+    );
+
+    return NextResponse.json({
+      docs,
+      totalDocs: docs.length,
+      totalPages: 1,
+    });
+  }
+
   const backendUrl = process.env.NEXT_PUBLIC_SERVER_URL;
   if (!backendUrl) {
     return NextResponse.json(
@@ -10,9 +28,11 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const token =
-    cookies().get("payload-token")?.value ||
-    cookies().get("auth-token")?.value;
+  const cookieStore = cookies();
+  const token = pickUsableAuthToken(
+    cookieStore.get("payload-token")?.value,
+    cookieStore.get("auth-token")?.value
+  );
   const targetUrl = new URL("/templates", backendUrl);
   targetUrl.search = req.nextUrl.search;
 

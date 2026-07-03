@@ -68,13 +68,14 @@ export const Toolbar: React.FC<Props> = ({ onAddMedia }) => {
   
   return (
     <div className="bg-neutral-900 border-t border-neutral-800">
-      <div className="flex items-center justify-between px-4 py-2">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 px-2 py-2 sm:grid sm:grid-cols-[auto_1fr_8rem] sm:px-4">
+        <div className="order-2 flex items-center gap-1 sm:order-none sm:justify-self-start">
           <button
             onClick={editorUndo}
             onPointerUp={blurOnUp}
             className="p-2 text-neutral-400 hover:text-white transition"
             title="復原 (Ctrl+Z)"
+            aria-label="復原"
           >
             <Undo2 className="w-4 h-4" />
           </button>
@@ -83,6 +84,7 @@ export const Toolbar: React.FC<Props> = ({ onAddMedia }) => {
             onPointerUp={blurOnUp}
             className="p-2 text-neutral-400 hover:text-white transition"
             title="重做 (Ctrl+Shift+Z)"
+            aria-label="重做"
           >
             <Redo2 className="w-4 h-4" />
           </button>
@@ -98,6 +100,8 @@ export const Toolbar: React.FC<Props> = ({ onAddMedia }) => {
                 : 'text-neutral-400 hover:text-white'
             }`}
             title="磁性吸附"
+            aria-label="切換磁性吸附"
+            aria-pressed={snapEnabled}
           >
             <Magnet className="w-4 h-4" />
           </button>
@@ -110,12 +114,14 @@ export const Toolbar: React.FC<Props> = ({ onAddMedia }) => {
                 : 'text-neutral-400 hover:text-white'
             }`}
             title="交換模式"
+            aria-label="切換交換模式"
+            aria-pressed={swapMode}
           >
             <ArrowLeftRight className="w-4 h-4" />
           </button>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="order-1 flex w-full items-center justify-center gap-2 sm:order-none sm:w-auto sm:gap-3">
           <span className="text-xs text-neutral-400 tabular-nums">
             {formatTime(playhead)}
           </span>
@@ -123,6 +129,7 @@ export const Toolbar: React.FC<Props> = ({ onAddMedia }) => {
             onClick={() => seek(Math.max(0, playhead - 5))}
             onPointerUp={blurOnUp}
             className="p-2 text-white hover:bg-neutral-800 rounded-full transition"
+            aria-label="倒退 5 秒"
           >
             <SkipBack className="w-4 h-4" />
           </button>
@@ -130,6 +137,7 @@ export const Toolbar: React.FC<Props> = ({ onAddMedia }) => {
             onClick={togglePlay}
             onPointerUp={blurOnUp}
             className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition"
+            aria-label={isPlaying ? '暫停' : '播放'}
           >
             {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
           </button>
@@ -137,6 +145,7 @@ export const Toolbar: React.FC<Props> = ({ onAddMedia }) => {
             onClick={() => seek(Math.min(totalDuration, playhead + 5))}
             onPointerUp={blurOnUp}
             className="p-2 text-white hover:bg-neutral-800 rounded-full transition"
+            aria-label="快轉 5 秒"
           >
             <SkipForward className="w-4 h-4" />
           </button>
@@ -145,7 +154,7 @@ export const Toolbar: React.FC<Props> = ({ onAddMedia }) => {
           </span>
         </div>
         
-        <div className="w-32" />
+        <div className="hidden w-32 sm:block" />
       </div>
       
       <div className="flex gap-1 px-2 pb-2 overflow-x-auto">
@@ -156,6 +165,7 @@ export const Toolbar: React.FC<Props> = ({ onAddMedia }) => {
             onPointerUp={blurOnUp}
             disabled={tool.disabled}
             className="flex flex-col items-center justify-center min-w-[64px] px-3 py-2 rounded-lg text-neutral-300 hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed transition"
+            aria-label={tool.label}
           >
             <tool.icon className="w-5 h-5 mb-1" />
             <span className="text-[10px]">{tool.label}</span>

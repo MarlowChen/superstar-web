@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import {
+  isMockAuthEnabled,
+  MOCK_BILLING_STATUS,
+  MOCK_USER_POINT,
+  pickUsableAuthToken,
+} from "@/app/lib/mockAuth";
 
 type RouteContext = {
   params: {
@@ -12,7 +18,101 @@ const allowedBillingPaths = new Set([
   "user-status",
   "cancel-subscription",
   "stripe-receipt-url",
+  "order-preview",
+  "create-checkout",
+  "upgrade-subscription",
+  "downgrade-subscription",
 ]);
+
+async function createMockBillingResponse(req: NextRequest, forwardedPath: string) {
+  if (forwardedPath === "user-status") {
+    return NextResponse.json(MOCK_BILLING_STATUS);
+  }
+
+  if (forwardedPath === "user-orders") {
+    return NextResponse.json({ orders: [], total: 0 });
+  }
+
+  if (forwardedPath === "stripe-receipt-url") {
+    return NextResponse.json({ url: null });
+  }
+
+  if (forwardedPath === "cancel-subscription") {
+    return NextResponse.json({ success: true, message: "Mock subscription cancelled" });
+  }
+
+  if (forwardedPath === "upgrade-subscription" || forwardedPath === "downgrade-subscription") {
+    return NextResponse.json({ success: true, mode: "mock" });
+  }
+
+  if (forwardedPath === "order-preview") {
+    const transactionType =
+      req.nextUrl.searchParams.get("transactionType")?.toUpperCase() || "PLUS_YEAR";
+    const locale = req.nextUrl.searchParams.get("locale") || "zh";
+    const isYearly = transactionType.endsWith("_YEAR");
+    const plan = transactionType.replace(/_YEAR$/, "");
+    const pointsByPlan: Record<string, number> = {
+      PLUS: 1000,
+      PRO: 4000,
+      MAX: 10000,
+      PAYG: 1000,
+    };
+    const monthlyPrices: Record<string, string> = {
+      PLUS: "NT$299",
+      PRO: "NT$799",
+      MAX: "NT$1,999",
+      PAYG: "NT$300",
+    };
+    const yearlyPrices: Record<string, string> = {
+      PLUS: "NT$2,870",
+      PRO: "NT$7,670",
+      MAX: "NT$19,190",
+    };
+    const added = pointsByPlan[plan] || pointsByPlan.PLUS;
+    const displayAmount =
+      isYearly && yearlyPrices[plan] ? yearlyPrices[plan] : monthlyPrices[plan] || monthlyPrices.PLUS;
+
+    return NextResponse.json({
+      transactionType,
+      locale,
+      title: `Mock ${plan} ${isYearly ? "Yearly" : "Monthly"}`,
+      displayAmount,
+      subscriptionInfo:
+        plan === "PAYG"
+          ? undefined
+          : {
+              billingCycle: isYearly ? "yearly" : "monthly",
+              description: isYearly ? "本機測試年訂閱" : "本機測試月訂閱",
+            },
+      purchaseInfo:
+        plan === "PAYG"
+          ? {
+              description: "本機測試點數包",
+            }
+          : undefined,
+      pointsChange: {
+        before: MOCK_USER_POINT.points,
+        after: MOCK_USER_POINT.points + added,
+        added,
+        description: `本機測試將增加 ${added.toLocaleString()} 點`,
+      },
+      statusChange: `FREE -> ${plan}`,
+      paymentMethod: {
+        displayText: "本機測試付款",
+      },
+      sessionId: `mock-${transactionType.toLowerCase()}`,
+    });
+  }
+
+  if (forwardedPath === "create-checkout") {
+    return NextResponse.json({
+      mode: "mock",
+      url: `${req.nextUrl.origin}/zh-TW?checkout=mock-success`,
+    });
+  }
+
+  return NextResponse.json({ error: "Mock billing route not found" }, { status: 404 });
+}
 
 async function proxyBillingRequest(req: NextRequest, context: RouteContext) {
   const forwardedPath = context.params.path.join("/");
@@ -21,9 +121,15 @@ async function proxyBillingRequest(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: "Billing route not found" }, { status: 404 });
   }
 
-  const token =
-    cookies().get("payload-token")?.value ||
-    cookies().get("auth-token")?.value;
+  if (isMockAuthEnabled()) {
+    return createMockBillingResponse(req, forwardedPath);
+  }
+
+  const cookieStore = cookies();
+  const token = pickUsableAuthToken(
+    cookieStore.get("payload-token")?.value,
+    cookieStore.get("auth-token")?.value
+  );
 
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

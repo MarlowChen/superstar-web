@@ -1,4 +1,4 @@
-// import EditedImages from "@/app/components/EditedImages";
+import EditedImages from "@/app/components/EditedImages";
 import { getPageMetadata } from "@/app/lib/metadata";
 import { Metadata } from "next";
 
@@ -11,5 +11,5 @@ export function generateMetadata({ params }: EditedPageProps): Metadata {
 }
 
 export default async function EditedPage() {
-  return <></>;
+  return <EditedImages />;
 }

@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { pickUsableAuthToken } from "@/app/lib/mockAuth";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { conversationId: string } }
 ) {
-  const token =
-    cookies().get("payload-token")?.value ||
-    cookies().get("auth-token")?.value;
+  const cookieStore = cookies();
+  const token = pickUsableAuthToken(
+    cookieStore.get("payload-token")?.value,
+    cookieStore.get("auth-token")?.value
+  );
 
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

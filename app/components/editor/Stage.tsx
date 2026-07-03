@@ -822,21 +822,21 @@ export const Stage: React.FC = () => {
       {/* 縮放控制條 */}
       <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-neutral-900/80 border-t border-neutral-800 shrink-0">
         <button onClick={() => setViewZoom(z => Math.max(MIN_ZOOM, Math.round((z - ZOOM_STEP) * 100) / 100))}
-          className="p-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-neutral-800 transition" title="縮小">
+          className="p-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-neutral-800 transition" title="縮小" aria-label="縮小">
           <ZoomOut className="w-3.5 h-3.5" />
         </button>
         <button onClick={() => { setViewZoom(1); setPanOffset({ x: 0, y: 0 }); }}
           className="px-2 py-1 rounded-md text-xs text-neutral-300 hover:text-white hover:bg-neutral-800 transition tabular-nums min-w-[3rem] text-center"
-          title="重設為 100%">
+          title="重設為 100%" aria-label="重設縮放為 100%">
           {zoomPercent}%
         </button>
         <button onClick={() => setViewZoom(z => Math.min(MAX_ZOOM, Math.round((z + ZOOM_STEP) * 100) / 100))}
-          className="p-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-neutral-800 transition" title="放大">
+          className="p-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-neutral-800 transition" title="放大" aria-label="放大">
           <ZoomIn className="w-3.5 h-3.5" />
         </button>
         <div className="w-px h-4 bg-neutral-700 mx-1" />
         <button onClick={() => { setViewZoom(1); setPanOffset({ x: 0, y: 0 }); }}
-          className="p-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-neutral-800 transition" title="最適大小">
+          className="p-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-neutral-800 transition" title="最適大小" aria-label="最適大小">
           <Maximize className="w-3.5 h-3.5" />
         </button>
       </div>

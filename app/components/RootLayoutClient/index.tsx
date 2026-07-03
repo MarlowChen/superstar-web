@@ -1,7 +1,6 @@
 "use client";
 
 import { AuthProvider, useAuth } from "@/app/context/AuthContext";
-import Image from "next/image";
 import {
   MenuVisibilityProvider,
   useMenuVisibility,
@@ -61,6 +60,15 @@ type OrderPreviewData = {
 };
 
 const MOBILE_BREAKPOINT = 768;
+const PROTECTED_PAGE_PREFIXES = [
+  "/collecting",
+  "/drawing",
+  "/edited",
+  "/library",
+  "/models",
+  "/recents",
+  "/templates",
+];
 
 function AuthLoadingScreen({ theme }: { theme: Theme }) {
   return (
@@ -121,13 +129,24 @@ function RootLayoutClientContent({
     value.length > 1 && value.endsWith("/") ? value.slice(0, -1) : value;
   const currentPath = normalizePath(pathname || "/");
   const loginPath = normalizePath(`/${locale}/login`);
+  const localePrefix = `/${locale}`;
+  const pathWithoutLocale =
+    currentPath === localePrefix
+      ? "/"
+      : currentPath.startsWith(`${localePrefix}/`)
+        ? normalizePath(currentPath.slice(localePrefix.length))
+        : currentPath;
+  const isProtectedPage = PROTECTED_PAGE_PREFIXES.some(
+    (prefix) => pathWithoutLocale === prefix || pathWithoutLocale.startsWith(`${prefix}/`)
+  );
+  const isMobileSidebarClosed = !isMobile || isCollapsed;
   const authPagePaths = [
     loginPath,
     `/${locale}/forgot-password`,
     `/${locale}/reset-password`,
   ].map(normalizePath);
   const isAuthPage = authPagePaths.includes(currentPath);
-  const shouldBlockProtectedPage = !isAuthPage && (loading || !user);
+  const shouldBlockProtectedPage = isProtectedPage && !isAuthPage && (loading || !user);
 
   const checkIfMobile = useCallback(() => {
     setIsCollapsed(window.innerWidth < MOBILE_BREAKPOINT);
@@ -241,6 +260,11 @@ function RootLayoutClientContent({
       return;
     }
 
+    if (!isProtectedPage) {
+      hasTriggeredLoginRedirectRef.current = false;
+      return;
+    }
+
     if (loading) {
       return;
     }
@@ -263,6 +287,7 @@ function RootLayoutClientContent({
   }, [
     currentPath,
     isAuthPage,
+    isProtectedPage,
     loading,
     locale,
     loginCallbackUrl,
@@ -478,7 +503,7 @@ function RootLayoutClientContent({
   return (
     <>
       <div
-        className={`flex h-screen overflow-hidden w-full ${
+        className={`flex h-screen min-h-0 w-full overflow-hidden [height:100dvh] ${
           theme === "dark" ? "bg-transparent" : "bg-transparent"
         }`}
         onClick={toggleCloseSidebar}
@@ -498,7 +523,7 @@ function RootLayoutClientContent({
           }}
         />
         <MobileSidebar
-          isOpen={isCollapsed}
+          isOpen={isMobileSidebarClosed}
           toggleSidebar={toggleSidebar}
           setIsDialogOpen={setIsDialogOpen}
           theme={theme}
@@ -507,7 +532,7 @@ function RootLayoutClientContent({
           }}
         />
         <div
-          className={`flex-1 flex flex-col transition-all duration-300 ease-in-out w-full ${
+          className={`flex min-w-0 flex-1 flex-col transition-all duration-300 ease-in-out ${
             isCollapsed ? "ml-0 md:ml-[60px]" : "ml-0 md:ml-[240px]"
           } ${theme === "dark" ? "bg-transparent" : "bg-transparent"}`}
         >
@@ -522,14 +547,15 @@ function RootLayoutClientContent({
           >
             <span className="inline-flex items-center gap-[14px]">
               <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center">
-                <Image
-                  src="/images/logo-small.svg"
-                  alt="超星AI平台"
-                  width={22}
-                  height={22}
-                  className="block object-contain"
-                  priority
-                />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+	                <img
+	                  src="/images/logo-small.svg"
+	                  alt="超星AI平台"
+	                  width={20}
+	                  height={22}
+	                  className="block object-contain"
+	                  style={{ width: "auto", height: 22 }}
+	                />
               </span>
               <span className="text-[12px] font-semibold leading-none text-[#10243a] dark:text-white">
                 Superstar

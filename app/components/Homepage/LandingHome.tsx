@@ -82,6 +82,8 @@ const LANE_MEDIA = {
 } as const;
 
 const isVideoMedia = (src: string) => /\.(mp4|webm|mov)(\?|#|$)/i.test(src);
+const isHeroPriorityShot = (src: string, index: number) =>
+  index < 3 || src === SHOWCASE_IMAGES[SHOWCASE_IMAGES.length - 1];
 
 const copyByLocale: Record<string, Copy> = {
   "zh-TW": {
@@ -213,8 +215,9 @@ export default function LandingHome({
 
   const pricingDuration = locale === "zh-TW" || locale === "ja" ? "/月" : "/month";
   const dashboardHref = localeHref(locale, "/drawing");
-  const modelsHref = localeHref(locale, "/models");
+  const modelsHref = "#models";
   const loginHref = localeHref(locale, "/login");
+  const loginWithWorkspaceCallbackHref = `${loginHref}?callbackUrl=${encodeURIComponent(dashboardHref)}`;
 
   const dashboardLabel =
     locale === "zh-TW" ? "進入工作台" : locale === "ja" ? "ワークスペースへ" : "Go to workspace";
@@ -229,7 +232,7 @@ export default function LandingHome({
   const isAuthenticated = Boolean(user || hasAuthCookie);
 
   const handleStartCreating = () => {
-    window.location.href = isAuthenticated ? dashboardHref : modelsHref;
+    window.location.href = isAuthenticated ? dashboardHref : loginWithWorkspaceCallbackHref;
   };
 
   const planFeatures = {
@@ -319,13 +322,14 @@ export default function LandingHome({
             className="psf-brand"
             style={{ display: "inline-flex", flexDirection: "row", alignItems: "center", gap: 14 }}
           >
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/images/logo-small.svg"
               alt="超星AI平台"
-              width={32}
+              width={29}
               height={32}
               className="psf-brand-mark"
-              priority
+              style={{ width: "auto", height: 32 }}
             />
             <span>超星AI平台</span>
           </Link>
@@ -392,14 +396,14 @@ export default function LandingHome({
           <div className="psf-marquee psf-marquee-up">
             {marqueeA.map((src, i) => (
               <div key={`g1-${i}`} className="psf-shot">
-                <Image src={src} alt="" fill sizes="220px" className="psf-shot-img" />
+                <Image src={src} alt="" fill sizes="220px" priority={isHeroPriorityShot(src, i)} className="psf-shot-img" />
               </div>
             ))}
           </div>
           <div className="psf-marquee psf-marquee-down">
             {[...marqueeA].reverse().map((src, i) => (
               <div key={`g2-${i}`} className="psf-shot">
-                <Image src={src} alt="" fill sizes="220px" className="psf-shot-img" />
+                <Image src={src} alt="" fill sizes="220px" priority={isHeroPriorityShot(src, i)} className="psf-shot-img" />
               </div>
             ))}
           </div>
@@ -409,8 +413,8 @@ export default function LandingHome({
       {/* ribbon */}
       <div className="psf-ribbon">
         <div className="psf-ribbon-track">
-          {[...t.ribbon, ...t.ribbon].map((item, i) => (
-            <span key={`${item}-${i}`} className="psf-ribbon-item">
+          {t.ribbon.map((item) => (
+            <span key={item} className="psf-ribbon-item">
               <span className="psf-ribbon-dot" />
               {item}
             </span>
@@ -573,7 +577,14 @@ export default function LandingHome({
             className="psf-brand psf-brand-sm"
             style={{ display: "inline-flex", flexDirection: "row", alignItems: "center", gap: 14 }}
           >
-            <Image src="/images/logo-small.svg" alt="超星AI平台" width={24} height={24} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+	            <img
+	              src="/images/logo-small.svg"
+	              alt="超星AI平台"
+	              width={22}
+	              height={24}
+	              style={{ width: "auto", height: 24 }}
+	            />
             <span>超星AI平台</span>
           </Link>
           <p className="psf-footer-note">© {new Date().getFullYear()} 超星AI平台</p>
@@ -592,761 +603,6 @@ export default function LandingHome({
           />
         </AuthProvider>
       ) : null}
-
-      <style jsx>{`
-        /* ============================================================ tokens */
-        .psf-home {
-          /* light (default) */
-          --bg: #f6f8fd;
-          --bg-soft: #eef2fb;
-          --surface: #ffffff;
-          --surface-2: #f3f6fc;
-          --border: rgba(34, 50, 74, 0.1);
-          --border-strong: rgba(34, 50, 74, 0.16);
-          --text: #1b2740;
-          --text-soft: #5c6c88;
-          --text-faint: #8a99b3;
-          --brand-a: #7d90ff;
-          --brand-b: #63cfff;
-          --accent: #159cff;
-          --accent-strong: #007edb;
-          --accent-tint: rgba(21, 156, 255, 0.1);
-          --shadow: 0 18px 40px -24px rgba(34, 50, 74, 0.4);
-          --shadow-lg: 0 30px 60px -30px rgba(34, 50, 74, 0.45);
-
-          background: var(--bg);
-          color: var(--text);
-          overflow-x: hidden;
-          font-feature-settings: "cv11", "ss01";
-        }
-        :global(.dark) .psf-home {
-          --bg: #0a121e;
-          --bg-soft: #0c1622;
-          --surface: #101c2b;
-          --surface-2: #0d1825;
-          --border: rgba(255, 255, 255, 0.08);
-          --border-strong: rgba(255, 255, 255, 0.14);
-          --text: #eef7ff;
-          --text-soft: #a6bed2;
-          --text-faint: #6f87a0;
-          --accent-tint: rgba(21, 156, 255, 0.16);
-          --shadow: 0 18px 50px -28px rgba(0, 0, 0, 0.8);
-          --shadow-lg: 0 40px 80px -40px rgba(0, 0, 0, 0.9);
-        }
-
-        .psf-shell {
-          margin: 0 auto;
-          width: 100%;
-          max-width: 1160px;
-          padding: 0 24px;
-        }
-
-        /* ============================================================ buttons */
-        .psf-btn {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
-          border-radius: 999px;
-          padding: 10px 20px;
-          font-size: 14px;
-          font-weight: 600;
-          line-height: 1;
-          cursor: pointer;
-          border: 1px solid transparent;
-          transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease,
-            box-shadow 0.18s ease, filter 0.18s ease;
-          white-space: nowrap;
-        }
-        .psf-btn > span {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          line-height: 1;
-        }
-        .psf-btn-lg {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 14px 28px;
-          font-size: 15px;
-        }
-        .psf-btn-primary {
-          background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
-          color: #fff;
-          box-shadow: 0 12px 28px -12px rgba(125, 144, 255, 0.6);
-        }
-        .psf-btn-primary:hover {
-          transform: translateY(-1px);
-          filter: brightness(1.05);
-        }
-        .psf-btn-ghost {
-          background: transparent;
-          color: var(--text);
-          border-color: var(--border-strong);
-        }
-        .psf-btn-ghost:hover {
-          background: var(--surface-2);
-        }
-        .psf-btn-outline {
-          background: var(--surface);
-          color: var(--text);
-          border-color: var(--border-strong);
-        }
-        .psf-btn-outline:hover {
-          transform: translateY(-1px);
-          border-color: var(--accent);
-          color: var(--accent);
-        }
-        .psf-btn-soft {
-          background: var(--surface-2);
-          color: var(--text);
-          border-color: var(--border);
-        }
-        .psf-btn-soft:hover {
-          background: var(--accent-tint);
-          color: var(--accent-strong);
-        }
-
-        /* ================================================================ nav */
-        .psf-nav {
-          position: sticky;
-          top: 0;
-          z-index: 50;
-          background: color-mix(in srgb, var(--bg) 72%, transparent);
-          backdrop-filter: blur(18px);
-          border-bottom: 1px solid var(--border);
-        }
-        .psf-nav-inner {
-          margin: 0 auto;
-          max-width: 1160px;
-          padding: 14px 24px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 16px;
-        }
-        .psf-brand {
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          min-height: 36px;
-          font-size: 20px;
-          font-weight: 700;
-          line-height: 1;
-          letter-spacing: -0.02em;
-          color: var(--text);
-        }
-        .psf-brand-mark {
-          display: block;
-          width: 32px;
-          height: 32px;
-          object-fit: contain;
-          flex: 0 0 auto;
-        }
-        .psf-nav-links {
-          display: none;
-          gap: 4px;
-        }
-        .psf-nav-links a {
-          padding: 8px 14px;
-          border-radius: 8px;
-          font-size: 14px;
-          font-weight: 500;
-          color: var(--text-soft);
-          transition: background 0.18s ease, color 0.18s ease;
-        }
-        .psf-nav-links a:hover {
-          background: var(--surface-2);
-          color: var(--text);
-        }
-        .psf-nav-actions {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-        .psf-account-pill {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          max-width: 190px;
-          min-height: 38px;
-          padding: 5px 12px 5px 6px;
-          border-radius: 999px;
-          color: var(--text);
-          background: var(--surface);
-          border: 1px solid var(--border);
-          box-shadow: var(--shadow-soft);
-        }
-        .psf-account-avatar {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 28px;
-          height: 28px;
-          flex: 0 0 auto;
-          border-radius: 999px;
-          color: #041124;
-          font-size: 13px;
-          font-weight: 800;
-          background: linear-gradient(135deg, var(--brand-b), var(--accent));
-        }
-        .psf-account-name {
-          min-width: 0;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          font-size: 14px;
-          font-weight: 700;
-          line-height: 1;
-        }
-        @media (min-width: 900px) {
-          .psf-nav-links {
-            display: flex;
-          }
-        }
-
-        /* =============================================================== hero */
-        .psf-hero {
-          position: relative;
-          max-width: 1160px;
-          margin: 0 auto;
-          padding: 72px 24px 56px;
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 40px;
-          align-items: center;
-        }
-        .psf-hero-glow {
-          position: absolute;
-          top: -160px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 720px;
-          height: 720px;
-          max-width: 120vw;
-          border-radius: 50%;
-          background: radial-gradient(
-            circle,
-            rgba(99, 207, 255, 0.22) 0%,
-            rgba(125, 144, 255, 0.12) 36%,
-            transparent 70%
-          );
-          pointer-events: none;
-          z-index: 0;
-        }
-        .psf-hero-copy {
-          position: relative;
-          z-index: 1;
-        }
-        .psf-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 7px 14px;
-          border-radius: 999px;
-          background: var(--surface);
-          border: 1px solid var(--border);
-          font-size: 13px;
-          font-weight: 500;
-          color: var(--text-soft);
-          box-shadow: var(--shadow);
-        }
-        .psf-badge-dot {
-          width: 7px;
-          height: 7px;
-          border-radius: 50%;
-          background: var(--accent);
-          box-shadow: 0 0 0 4px var(--accent-tint);
-        }
-        .psf-hero-title {
-          margin: 24px 0 0;
-          font-size: clamp(38px, 6.4vw, 66px);
-          font-weight: 700;
-          line-height: 1.04;
-          letter-spacing: -0.04em;
-          max-width: 16ch;
-        }
-        .psf-grad-text {
-          background: linear-gradient(120deg, var(--brand-a), var(--accent), var(--brand-b));
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
-        }
-        .psf-hero-sub {
-          margin: 22px 0 0;
-          max-width: 46ch;
-          font-size: clamp(16px, 2.2vw, 19px);
-          line-height: 1.6;
-          color: var(--text-soft);
-        }
-        .psf-hero-cta {
-          margin-top: 32px;
-          display: flex;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 12px;
-        }
-
-        .psf-hero-gallery {
-          position: relative;
-          z-index: 1;
-          display: none;
-          grid-template-columns: 1fr 1fr;
-          gap: 16px;
-          height: 520px;
-          overflow: hidden;
-          mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
-        }
-        .psf-marquee {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-          animation: psf-scroll-y 38s linear infinite;
-        }
-        .psf-marquee-down {
-          animation-direction: reverse;
-          animation-duration: 46s;
-        }
-        .psf-shot {
-          position: relative;
-          width: 100%;
-          aspect-ratio: 4 / 5;
-          border-radius: 18px;
-          overflow: hidden;
-          border: 1px solid var(--border);
-          box-shadow: var(--shadow);
-          background: var(--surface-2);
-          flex-shrink: 0;
-        }
-        :global(.psf-shot-img) {
-          object-fit: cover;
-        }
-        @media (min-width: 980px) {
-          .psf-hero {
-            grid-template-columns: 1.05fr 0.95fr;
-            padding-top: 96px;
-          }
-          .psf-hero-gallery {
-            display: grid;
-          }
-        }
-
-        /* ============================================================= ribbon */
-        .psf-ribbon {
-          overflow: hidden;
-          border-top: 1px solid var(--border);
-          border-bottom: 1px solid var(--border);
-          background: var(--bg-soft);
-          mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
-          padding: 18px 0;
-        }
-        .psf-ribbon-track {
-          display: flex;
-          width: max-content;
-          gap: 44px;
-          animation: psf-scroll-x 26s linear infinite;
-        }
-        .psf-ribbon-item {
-          display: inline-flex;
-          align-items: center;
-          gap: 9px;
-          font-size: 16px;
-          font-weight: 600;
-          color: var(--text-faint);
-          white-space: nowrap;
-        }
-        .psf-ribbon-dot {
-          width: 7px;
-          height: 7px;
-          border-radius: 50%;
-          background: var(--accent);
-        }
-
-        /* ============================================================ section */
-        .psf-section {
-          padding: 88px 0;
-        }
-        .psf-eyebrow {
-          font-size: 12px;
-          font-weight: 600;
-          letter-spacing: 0.18em;
-          text-transform: uppercase;
-          color: var(--text-faint);
-          margin: 0;
-        }
-        .psf-h2 {
-          margin: 14px 0 0;
-          font-size: clamp(28px, 4.4vw, 46px);
-          font-weight: 700;
-          line-height: 1.1;
-          letter-spacing: -0.035em;
-          max-width: 18ch;
-        }
-        .psf-h2-tight {
-          max-width: 14ch;
-        }
-
-        /* ============================================================== lanes */
-        .psf-lanes {
-          margin-top: 48px;
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 20px;
-        }
-        @media (min-width: 720px) {
-          .psf-lanes {
-            grid-template-columns: repeat(3, 1fr);
-          }
-        }
-        .psf-lane {
-          display: flex;
-          flex-direction: column;
-          border-radius: 22px;
-          background: var(--surface);
-          border: 1px solid var(--border);
-          overflow: hidden;
-          box-shadow: var(--shadow);
-          transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
-        }
-        .psf-lane:hover {
-          transform: translateY(-4px);
-          box-shadow: var(--shadow-lg);
-          border-color: var(--border-strong);
-        }
-        .psf-lane-thumb {
-          position: relative;
-          aspect-ratio: 3 / 2;
-          overflow: hidden;
-          background: var(--surface-2);
-        }
-        :global(.psf-lane-media) {
-          position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          transition: transform 0.4s ease;
-        }
-        .psf-lane:hover :global(.psf-lane-media) {
-          transform: scale(1.06);
-        }
-        .psf-lane-tag {
-          position: absolute;
-          top: 12px;
-          left: 12px;
-          padding: 5px 12px;
-          border-radius: 999px;
-          font-size: 12px;
-          font-weight: 600;
-          color: #fff;
-          background: rgba(10, 18, 30, 0.55);
-          backdrop-filter: blur(8px);
-        }
-        .psf-lane-body {
-          padding: 22px;
-          display: flex;
-          flex-direction: column;
-          flex: 1;
-        }
-        .psf-lane-title {
-          margin: 0;
-          font-size: 20px;
-          font-weight: 700;
-          letter-spacing: -0.02em;
-        }
-        .psf-lane-models {
-          margin: 6px 0 0;
-          font-size: 13px;
-          font-weight: 600;
-          color: var(--accent);
-        }
-        .psf-lane-text {
-          margin: 14px 0 0;
-          font-size: 14px;
-          line-height: 1.65;
-          color: var(--text-soft);
-          flex: 1;
-        }
-        .psf-lane-link {
-          margin-top: 18px;
-          align-self: flex-start;
-          background: none;
-          border: none;
-          padding: 0;
-          font-size: 14px;
-          font-weight: 600;
-          color: var(--accent);
-          cursor: pointer;
-          display: inline-flex;
-          gap: 5px;
-          text-decoration: none;
-          transition: gap 0.18s ease;
-        }
-        .psf-lane-link:hover {
-          gap: 9px;
-        }
-
-        /* ============================================================ privacy */
-        .psf-privacy {
-          border-radius: 28px;
-          padding: clamp(28px, 5vw, 56px);
-          background: linear-gradient(
-            135deg,
-            color-mix(in srgb, var(--brand-a) 14%, var(--surface)),
-            var(--surface)
-          );
-          border: 1px solid var(--border);
-          box-shadow: var(--shadow);
-        }
-        .psf-privacy-body {
-          margin: 20px 0 0;
-          max-width: 60ch;
-          font-size: clamp(15px, 2vw, 17px);
-          line-height: 1.75;
-          color: var(--text-soft);
-        }
-        .psf-chips {
-          margin-top: 26px;
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-        }
-        .psf-chip {
-          padding: 8px 16px;
-          border-radius: 999px;
-          font-size: 13px;
-          font-weight: 600;
-          color: var(--text);
-          background: var(--surface-2);
-          border: 1px solid var(--border);
-        }
-
-        /* ============================================================ pricing */
-        .psf-pricing-head {
-          text-align: center;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-        }
-        .psf-pricing-head .psf-h2 {
-          max-width: none;
-        }
-        .psf-pricing-sub {
-          margin: 14px 0 0;
-          max-width: 52ch;
-          font-size: 15px;
-          line-height: 1.6;
-          color: var(--text-soft);
-        }
-        .psf-toggle {
-          margin-top: 28px;
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          padding: 5px;
-          border-radius: 16px;
-          background: var(--surface-2);
-          border: 1px solid var(--border);
-        }
-        .psf-toggle button {
-          border: none;
-          background: transparent;
-          padding: 9px 22px;
-          border-radius: 12px;
-          font-size: 14px;
-          font-weight: 600;
-          color: var(--text-soft);
-          cursor: pointer;
-          transition: background 0.18s ease, color 0.18s ease;
-        }
-        .psf-toggle button.is-active {
-          background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
-          color: #fff;
-        }
-        .psf-toggle-badge {
-          margin-left: 4px;
-          padding: 6px 12px;
-          border-radius: 10px;
-          font-size: 12px;
-          font-weight: 700;
-          color: var(--accent-strong);
-          background: var(--accent-tint);
-        }
-
-        .psf-plans {
-          margin-top: 48px;
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 18px;
-        }
-        @media (min-width: 640px) {
-          .psf-plans {
-            grid-template-columns: repeat(2, 1fr);
-          }
-        }
-        @media (min-width: 1080px) {
-          .psf-plans {
-            grid-template-columns: repeat(4, 1fr);
-          }
-        }
-        .psf-plan {
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          padding: 30px 26px;
-          border-radius: 24px;
-          background: var(--surface);
-          border: 1px solid var(--border);
-          box-shadow: var(--shadow);
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .psf-plan:hover {
-          transform: translateY(-3px);
-          box-shadow: var(--shadow-lg);
-        }
-        .psf-plan.is-popular {
-          border-color: transparent;
-          background: linear-gradient(var(--surface), var(--surface)) padding-box,
-            linear-gradient(135deg, var(--brand-a), var(--brand-b)) border-box;
-          border: 1.5px solid transparent;
-        }
-        .psf-plan-flag {
-          position: absolute;
-          top: -12px;
-          left: 50%;
-          transform: translateX(-50%);
-          padding: 5px 14px;
-          border-radius: 999px;
-          font-size: 12px;
-          font-weight: 700;
-          color: #fff;
-          background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
-          box-shadow: 0 8px 18px -8px rgba(125, 144, 255, 0.8);
-        }
-        .psf-plan-name {
-          margin: 0;
-          font-size: 22px;
-          font-weight: 700;
-          letter-spacing: -0.02em;
-        }
-        .psf-plan-tagline {
-          margin: 8px 0 0;
-          font-size: 13px;
-          line-height: 1.5;
-          color: var(--text-soft);
-          min-height: 38px;
-        }
-        .psf-plan-price {
-          margin-top: 22px;
-          display: flex;
-          align-items: flex-end;
-          gap: 6px;
-        }
-        .psf-plan-amount {
-          font-size: 44px;
-          font-weight: 700;
-          line-height: 1;
-          letter-spacing: -0.04em;
-        }
-        .is-popular .psf-plan-amount {
-          background: linear-gradient(120deg, var(--brand-a), var(--brand-b));
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
-        }
-        .psf-plan-period {
-          padding-bottom: 4px;
-          font-size: 14px;
-          font-weight: 600;
-          color: var(--text-soft);
-        }
-        .psf-plan-original {
-          margin: 10px 0 0;
-          font-size: 13px;
-          color: var(--text-faint);
-        }
-        .psf-plan-original-empty {
-          visibility: hidden;
-        }
-        .psf-plan-features {
-          margin: 24px 0 0;
-          padding: 0;
-          list-style: none;
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-          flex: 1;
-        }
-        .psf-plan-features li {
-          display: flex;
-          align-items: flex-start;
-          gap: 10px;
-          font-size: 14px;
-          line-height: 1.45;
-          color: var(--text);
-        }
-        :global(.psf-plan-check) {
-          width: 18px;
-          height: 18px;
-          flex-shrink: 0;
-          margin-top: 1px;
-          color: var(--accent);
-        }
-        .psf-plan-btn {
-          margin-top: 26px;
-          width: 100%;
-          padding: 13px;
-          font-size: 15px;
-        }
-
-        /* ============================================================= footer */
-        .psf-footer {
-          border-top: 1px solid var(--border);
-          padding: 32px 0;
-          background: var(--bg-soft);
-        }
-        .psf-footer-inner {
-          display: flex;
-          flex-wrap: wrap;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-        }
-        .psf-brand-sm {
-          display: flex;
-          align-items: center;
-          min-height: 28px;
-          font-size: 16px;
-        }
-        .psf-brand-sm :global(img) {
-          width: 24px;
-          height: 24px;
-        }
-        .psf-footer-note {
-          margin: 0;
-          font-size: 13px;
-          color: var(--text-faint);
-        }
-
-        /* ========================================================= keyframes */
-        @keyframes psf-scroll-x {
-          to {
-            transform: translateX(-50%);
-          }
-        }
-        @keyframes psf-scroll-y {
-          to {
-            transform: translateY(-50%);
-          }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .psf-ribbon-track,
-          .psf-marquee {
-            animation: none;
-          }
-        }
-      `}</style>
     </main>
   );
 }

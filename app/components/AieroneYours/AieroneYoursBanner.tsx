@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 
 const PSFYoursBanner = () => {
   const [isVisible, setIsVisible] = useState(false);
-  const t = useTranslations("psfyours");
+  const t = useTranslations("aieroneyours");
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 100);
     return () => clearTimeout(timer);
@@ -17,8 +17,8 @@ const PSFYoursBanner = () => {
       style={{ backgroundColor: "#E8E4DF" }}
     >
       {/* 16:9 等比例容器 - 與原版架構一致 */}
-      <div className="relative w-full" style={{ paddingTop: "56.25%" }}>
-        <div className="absolute inset-0">
+      <div className="relative w-full overflow-hidden" style={{ paddingTop: "56.25%" }}>
+        <div className="absolute inset-0 overflow-hidden">
           {/* 第一行文字 - PSF 靠左，佔寬度 2/3 */}
           <div
             className={`
@@ -35,7 +35,7 @@ const PSFYoursBanner = () => {
                 fontSize: "clamp(3.5rem, 20vw, 18rem)",
               }}
             >
-              {t("psf")}
+              {t("aierone")}
             </h1>
           </div>
 
@@ -97,7 +97,7 @@ const PSFYoursBanner = () => {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/images/psfyours/PSFYours.png"
+              src="/images/aieroneyours/AieroneYours.png"
               alt="Artist Character"
               className="w-full h-auto object-contain"
               onError={(e) => {

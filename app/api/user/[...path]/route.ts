@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import {
+  getMockUserImages,
+  getMockUser,
+  isMockAuthEnabled,
+  pickUsableAuthToken,
+  MOCK_USER_POINT,
+  MOCK_USER_SETTINGS,
+} from "@/app/lib/mockAuth";
 
 type RouteContext = {
   params: {
@@ -8,9 +16,36 @@ type RouteContext = {
 };
 
 async function proxyUserRequest(req: NextRequest, context: RouteContext) {
-  const token =
-    cookies().get("payload-token")?.value ||
-    cookies().get("auth-token")?.value;
+  if (isMockAuthEnabled()) {
+    const [resource, pageSegment, limitSegment] = context.params.path;
+
+    if (resource === "point") {
+      return NextResponse.json(MOCK_USER_POINT);
+    }
+
+    if (resource === "settings") {
+      return NextResponse.json(MOCK_USER_SETTINGS);
+    }
+
+    if (resource === "profile") {
+      return NextResponse.json({ user: getMockUser() });
+    }
+
+    if (resource === "images") {
+      const page = Number(pageSegment) || 1;
+      const limit = Number(limitSegment) || 10;
+
+      return NextResponse.json(getMockUserImages(page, limit));
+    }
+
+    return NextResponse.json({});
+  }
+
+  const cookieStore = cookies();
+  const token = pickUsableAuthToken(
+    cookieStore.get("payload-token")?.value,
+    cookieStore.get("auth-token")?.value
+  );
 
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

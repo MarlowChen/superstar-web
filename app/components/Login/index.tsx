@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useLocale } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -232,7 +231,6 @@ const Login = () => {
       }
 
       router.replace(finalCallbackUrl);
-      router.refresh();
     } catch (submitError) {
       setError(
         submitError instanceof Error
@@ -261,7 +259,14 @@ const Login = () => {
           className="psf-auth-brand"
           style={{ display: "inline-flex", flexDirection: "row", alignItems: "center", gap: 14 }}
         >
-          <Image src="/images/logo-small.svg" alt="超星AI平台" width={26} height={26} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+	          <img
+	            src="/images/logo-small.svg"
+	            alt="超星AI平台"
+	            width={23}
+	            height={26}
+	            style={{ width: "auto", height: 26 }}
+	          />
           <span>超星AI平台</span>
         </Link>
         <div className="psf-auth-pitch-body">
@@ -284,7 +289,14 @@ const Login = () => {
             className="psf-auth-brand psf-auth-brand-mobile"
             style={{ display: "inline-flex", flexDirection: "row", alignItems: "center", gap: 14 }}
           >
-            <Image src="/images/logo-small.svg" alt="超星AI平台" width={24} height={24} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+	            <img
+	              src="/images/logo-small.svg"
+	              alt="超星AI平台"
+	              width={22}
+	              height={24}
+	              style={{ width: "auto", height: 24 }}
+	            />
             <span>超星AI平台</span>
           </Link>
 
@@ -315,6 +327,8 @@ const Login = () => {
           <div className="psf-auth-tabs" role="tablist" aria-label="Auth mode">
             <button
               type="button"
+              role="tab"
+              aria-selected={mode === "login"}
               className={mode === "login" ? "is-active" : ""}
               onClick={() => switchMode("login")}
             >
@@ -322,6 +336,8 @@ const Login = () => {
             </button>
             <button
               type="button"
+              role="tab"
+              aria-selected={mode === "register"}
               className={mode === "register" ? "is-active" : ""}
               onClick={() => switchMode("register")}
             >
@@ -462,375 +478,6 @@ const Login = () => {
           </Link>
         </div>
       </section>
-
-      <style jsx>{`
-        .psf-auth {
-          --bg: #f6f8fd;
-          --surface: #ffffff;
-          --surface-2: #f3f6fc;
-          --border: rgba(34, 50, 74, 0.12);
-          --border-strong: rgba(34, 50, 74, 0.2);
-          --text: #1b2740;
-          --text-soft: #5c6c88;
-          --text-faint: #8a99b3;
-          --brand-a: #7d90ff;
-          --brand-b: #63cfff;
-          --accent: #159cff;
-          --accent-strong: #007edb;
-          --accent-tint: rgba(21, 156, 255, 0.1);
-          --danger: #e5484d;
-
-          min-height: 100vh;
-          display: grid;
-          grid-template-columns: 1fr;
-          background: var(--bg);
-          color: var(--text);
-        }
-        :global(.dark) .psf-auth {
-          --bg: #0a121e;
-          --surface: #101c2b;
-          --surface-2: #0d1825;
-          --border: rgba(255, 255, 255, 0.1);
-          --border-strong: rgba(255, 255, 255, 0.2);
-          --text: #eef7ff;
-          --text-soft: #a6bed2;
-          --text-faint: #6f87a0;
-          --accent-tint: rgba(21, 156, 255, 0.18);
-        }
-        @media (min-width: 900px) {
-          .psf-auth {
-            grid-template-columns: 1.05fr 1fr;
-          }
-        }
-
-        .psf-auth-pitch {
-          display: none;
-          position: relative;
-          overflow: hidden;
-          flex-direction: column;
-          justify-content: space-between;
-          padding: 48px;
-          background: linear-gradient(150deg, #0c1622, #101c2b 60%, #0a121e);
-          color: #eef7ff;
-        }
-        @media (min-width: 900px) {
-          .psf-auth-pitch {
-            display: flex;
-          }
-        }
-        .psf-auth-glow {
-          position: absolute;
-          top: -180px;
-          right: -120px;
-          width: 560px;
-          height: 560px;
-          border-radius: 50%;
-          background: radial-gradient(
-            circle,
-            rgba(99, 207, 255, 0.32),
-            rgba(125, 144, 255, 0.16) 40%,
-            transparent 70%
-          );
-          pointer-events: none;
-        }
-        .psf-auth-brand {
-          position: relative;
-          z-index: 1;
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          min-height: 30px;
-          font-size: 18px;
-          font-weight: 700;
-          line-height: 1;
-          letter-spacing: -0.02em;
-          color: inherit;
-        }
-        .psf-auth-brand :global(img) {
-          display: block;
-          width: 26px;
-          height: 26px;
-          object-fit: contain;
-          flex: 0 0 auto;
-        }
-        .psf-auth-pitch-body {
-          position: relative;
-          z-index: 1;
-          max-width: 30ch;
-        }
-        .psf-auth-pitch-title {
-          font-size: clamp(28px, 3vw, 40px);
-          font-weight: 700;
-          line-height: 1.12;
-          letter-spacing: -0.035em;
-          margin: 0;
-        }
-        .psf-auth-pitch-sub {
-          margin: 18px 0 0;
-          font-size: 16px;
-          line-height: 1.6;
-          color: #a6bed2;
-        }
-        .psf-auth-points {
-          margin-top: 28px;
-          display: flex;
-          flex-wrap: wrap;
-          gap: 14px;
-        }
-        .psf-auth-chip {
-          padding: 8px 15px;
-          border-radius: 999px;
-          font-size: 13px;
-          font-weight: 600;
-          color: #eef7ff;
-          background: rgba(255, 255, 255, 0.06);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .psf-auth-panel {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 32px 22px;
-        }
-        .psf-auth-card {
-          width: 100%;
-          max-width: 430px;
-        }
-        .psf-auth-brand-mobile {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          min-height: 28px;
-          font-size: 17px;
-          font-weight: 700;
-          line-height: 1;
-          color: var(--text);
-          margin-bottom: 28px;
-        }
-        @media (min-width: 900px) {
-          .psf-auth-brand-mobile {
-            display: none;
-          }
-        }
-        .psf-auth-title {
-          margin: 0;
-          font-size: 30px;
-          font-weight: 700;
-          letter-spacing: -0.03em;
-        }
-        .psf-auth-subtitle {
-          margin: 8px 0 0;
-          font-size: 15px;
-          color: var(--text-soft);
-        }
-        .psf-auth-oauth {
-          margin-top: 28px;
-          width: 100%;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-          padding: 12px;
-          border-radius: 12px;
-          font-size: 14px;
-          font-weight: 600;
-          color: var(--text);
-          background: var(--surface);
-          border: 1px solid var(--border-strong);
-          cursor: pointer;
-          transition: background 0.18s ease, transform 0.18s ease;
-        }
-        .psf-auth-oauth:hover:not(:disabled) {
-          background: var(--surface-2);
-          transform: translateY(-1px);
-        }
-        .psf-auth-oauth:disabled {
-          opacity: 0.6;
-          cursor: default;
-        }
-        .psf-auth-divider {
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          margin: 22px 0;
-          color: var(--text-faint);
-          font-size: 13px;
-        }
-        .psf-auth-divider::before,
-        .psf-auth-divider::after {
-          content: "";
-          flex: 1;
-          height: 1px;
-          background: var(--border);
-        }
-        .psf-auth-tabs {
-          margin: 0 0 22px;
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 8px;
-          padding: 6px;
-          border-radius: 14px;
-          background: var(--surface-2);
-          border: 1px solid var(--border);
-        }
-        .psf-auth-tabs button {
-          border: 0;
-          border-radius: 10px;
-          padding: 10px;
-          color: var(--text-soft);
-          background: transparent;
-          font-size: 14px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
-        }
-        .psf-auth-tabs button.is-active {
-          color: var(--text);
-          background: var(--surface);
-          box-shadow: 0 10px 24px -18px rgba(34, 50, 74, 0.5);
-        }
-        .psf-auth-grid {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 12px;
-        }
-        @media (min-width: 560px) {
-          .psf-auth-grid {
-            grid-template-columns: 1fr 1fr;
-          }
-        }
-        .psf-auth-field {
-          margin-bottom: 16px;
-        }
-        .psf-auth-field label {
-          display: block;
-          margin-bottom: 7px;
-          font-size: 13px;
-          font-weight: 600;
-          color: var(--text);
-        }
-        .psf-auth-label-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-        .psf-auth-forgot {
-          font-size: 13px;
-          font-weight: 600;
-          color: var(--accent);
-        }
-        .psf-auth-forgot:hover {
-          color: var(--accent-strong);
-        }
-        .psf-auth-field input {
-          width: 100%;
-          padding: 12px 14px;
-          border-radius: 12px;
-          font-size: 15px;
-          color: var(--text);
-          background: var(--surface);
-          border: 1px solid var(--border-strong);
-          outline: none;
-          transition: border-color 0.18s ease, box-shadow 0.18s ease;
-        }
-        .psf-auth-field input::placeholder {
-          color: var(--text-faint);
-        }
-        .psf-auth-field input:focus {
-          border-color: var(--accent);
-          box-shadow: 0 0 0 4px var(--accent-tint);
-        }
-        .psf-auth-pw {
-          position: relative;
-        }
-        .psf-auth-pw input {
-          padding-right: 46px;
-        }
-        .psf-auth-pw-toggle {
-          position: absolute;
-          top: 50%;
-          right: 8px;
-          transform: translateY(-50%);
-          display: flex;
-          padding: 6px;
-          border: none;
-          background: transparent;
-          color: var(--text-faint);
-          cursor: pointer;
-          border-radius: 8px;
-        }
-        .psf-auth-pw-toggle:hover {
-          color: var(--text);
-          background: var(--surface-2);
-        }
-        .psf-auth-error {
-          margin: 0 0 14px;
-          font-size: 13px;
-          color: var(--danger);
-        }
-        .psf-auth-submit {
-          width: 100%;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          padding: 13px;
-          border-radius: 12px;
-          font-size: 15px;
-          font-weight: 700;
-          color: #fff;
-          border: none;
-          cursor: pointer;
-          background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
-          box-shadow: 0 14px 30px -14px rgba(125, 144, 255, 0.7);
-          transition: transform 0.18s ease, filter 0.18s ease;
-        }
-        .psf-auth-submit:hover:not(:disabled) {
-          transform: translateY(-1px);
-          filter: brightness(1.05);
-        }
-        .psf-auth-submit:disabled {
-          opacity: 0.75;
-          cursor: default;
-        }
-        :global(.psf-spin) {
-          animation: psf-spin 0.8s linear infinite;
-        }
-        .psf-auth-foot {
-          margin: 22px 0 0;
-          text-align: center;
-          font-size: 14px;
-          color: var(--text-soft);
-        }
-        .psf-auth-foot-link {
-          border: 0;
-          padding: 0;
-          background: transparent;
-          font: inherit;
-          font-weight: 700;
-          color: var(--accent);
-          cursor: pointer;
-        }
-        .psf-auth-foot-link:hover {
-          color: var(--accent-strong);
-        }
-        .psf-auth-back {
-          display: block;
-          margin-top: 24px;
-          text-align: center;
-          font-size: 13px;
-          color: var(--text-faint);
-        }
-        .psf-auth-back:hover {
-          color: var(--text-soft);
-        }
-        @keyframes psf-spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-      `}</style>
     </main>
   );
 };

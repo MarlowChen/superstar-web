@@ -438,7 +438,7 @@ export default function HomeWorkspace({
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-7xl flex-col">
         <div className="flex h-full w-full flex-1 flex-col items-center justify-center px-4 pb-[16vh]">
           <div className="mb-6 max-w-2xl text-center">
-            <h2 className="text-3xl font-semibold tracking-[-0.04em] text-[#2f2740] dark:text-white md:text-4xl">
+            <h2 className="text-3xl font-semibold tracking-normal text-[#2f2740] dark:text-white md:text-4xl">
               {copy.greeting}
             </h2>
             <p className="mt-2 text-sm leading-7 text-[#7a6f90] dark:text-[#978ea8] md:text-base">

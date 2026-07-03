@@ -1,8 +1,15 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import {
+  getMockUser,
+  isMockAuthEnabled,
+  MOCK_AUTH_TOKEN,
+  pickUsableAuthToken,
+} from "@/app/lib/mockAuth";
 import type { User } from "../../payload-types";
 
 const REFRESH_THRESHOLD_MS = 5 * 60 * 1000;
+const debugAuth = process.env.NEXT_PUBLIC_DEBUG_AUTH === "true";
 
 export const getMeUser = async (args?: {
   nullUserRedirect?: string;
@@ -14,9 +21,21 @@ export const getMeUser = async (args?: {
 }> => {
   const { nullUserRedirect, validUserRedirect, callbackUrl } = args || {};
   const cookieStore = cookies();
-  const token =
-    cookieStore.get("payload-token")?.value ||
-    cookieStore.get("auth-token")?.value;
+  const token = pickUsableAuthToken(
+    cookieStore.get("payload-token")?.value,
+    cookieStore.get("auth-token")?.value
+  );
+
+  if (!token && isMockAuthEnabled()) {
+    const user = getMockUser();
+
+    if (validUserRedirect) {
+      redirect(validUserRedirect);
+    }
+
+    return { user, token: MOCK_AUTH_TOKEN };
+  }
+
   if (!token) {
     if (nullUserRedirect) {
       const url = callbackUrl
@@ -28,17 +47,30 @@ export const getMeUser = async (args?: {
     return { user: null, token };
   }
 
+  if (isMockAuthEnabled() && token === MOCK_AUTH_TOKEN) {
+    const user = getMockUser();
+
+    if (validUserRedirect) {
+      redirect(validUserRedirect);
+    }
+
+    return { user, token };
+  }
+
   if (token) {
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));
       const expirationTime = payload.exp * 1000;
-      console.log("🔐 getMeUser:token-meta", {
-        exp: payload.exp,
-        expiresAt: new Date(expirationTime).toISOString(),
-        isNearExpiry: Date.now() > expirationTime - REFRESH_THRESHOLD_MS,
-      });
+      if (debugAuth) {
+        console.info("getMeUser: token expiry check", {
+          expiresAt: new Date(expirationTime).toISOString(),
+          isNearExpiry: Date.now() > expirationTime - REFRESH_THRESHOLD_MS,
+        });
+      }
       if (Date.now() > expirationTime - REFRESH_THRESHOLD_MS) {
-        console.log("🔐 getMeUser:refresh-token");
+        if (debugAuth) {
+          console.info("getMeUser: refresh token");
+        }
         await refreshToken(token);
       }
     } catch (e) {
@@ -84,7 +116,9 @@ async function refreshToken(
   token: string
 ): Promise<{ refreshedToken: string; exp: number } | null> {
   try {
-    console.log("🔐 refreshToken:start");
+    if (debugAuth) {
+      console.info("refreshToken: start");
+    }
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_SERVER_URL}/api/users/refresh-token`,
       {
@@ -100,9 +134,9 @@ async function refreshToken(
     if (!res.ok) throw new Error("Failed to refresh token");
 
     const data = await res.json();
-    console.log("🔐 refreshToken:success", {
-      exp: data.exp,
-    });
+    if (debugAuth) {
+      console.info("refreshToken: success");
+    }
     return { refreshedToken: data.refreshedToken, exp: data.exp };
   } catch (error) {
     console.error("Error refreshing token:", error);

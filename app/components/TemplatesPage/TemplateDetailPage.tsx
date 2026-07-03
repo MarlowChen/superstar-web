@@ -156,7 +156,7 @@ export default function TemplateDetailPage({
 
   if (loading) {
     return (
-      <main className="app-soft-bg min-h-screen px-4 py-6 md:px-8 md:py-8">
+      <main className="app-soft-bg min-h-screen px-4 pb-6 pt-20 md:px-8 md:py-8">
         <div className="mx-auto max-w-5xl">
           <div className="app-glass-panel rounded-[28px] px-6 py-10 text-sm text-[#68809f] dark:text-[#aebbd6]">
             {text.loading}
@@ -168,7 +168,7 @@ export default function TemplateDetailPage({
 
   if (!template) {
     return (
-      <main className="app-soft-bg min-h-screen px-4 py-6 md:px-8 md:py-8">
+      <main className="app-soft-bg min-h-screen px-4 pb-6 pt-20 md:px-8 md:py-8">
         <div className="mx-auto max-w-5xl">
           <div className="app-glass-panel rounded-[28px] px-6 py-10 text-sm text-[#68809f] dark:text-[#aebbd6]">
             {text.notFound}
@@ -250,7 +250,7 @@ export default function TemplateDetailPage({
   };
 
   return (
-    <main className="app-soft-bg min-h-screen px-4 py-6 md:px-8 md:py-8">
+    <main className="app-soft-bg min-h-screen px-4 pb-6 pt-20 md:px-8 md:py-8">
       <div className="mx-auto max-w-5xl space-y-5">
         <Link
           href={backHref}
@@ -276,6 +276,7 @@ export default function TemplateDetailPage({
                 alt={template.cover?.alt || template.title}
                 fill
                 sizes="100vw"
+                priority
                 className="object-contain p-5"
               />
             )}
@@ -290,7 +291,7 @@ export default function TemplateDetailPage({
 
           <div className="space-y-5 p-6 md:p-8">
             <div>
-              <h1 className="text-2xl font-semibold tracking-[-0.03em] text-[#243555] dark:text-[#f1f5ff] md:text-4xl">
+              <h1 className="text-2xl font-semibold tracking-normal text-[#243555] dark:text-[#f1f5ff] md:text-4xl">
                 {template.title}
               </h1>
               {template.summary && (

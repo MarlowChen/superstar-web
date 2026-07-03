@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import {
+  isMockAuthEnabled,
+  MOCK_TEMPLATES,
+  pickUsableAuthToken,
+} from "@/app/lib/mockAuth";
 
 type RouteContext = {
   params: {
@@ -8,6 +13,17 @@ type RouteContext = {
 };
 
 export async function GET(req: NextRequest, context: RouteContext) {
+  if (isMockAuthEnabled()) {
+    const slug = context.params.path[0];
+    const template = MOCK_TEMPLATES.find((item) => item.slug === slug);
+
+    if (!template) {
+      return NextResponse.json({ error: "Template not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(template);
+  }
+
   const backendUrl = process.env.NEXT_PUBLIC_SERVER_URL;
   if (!backendUrl) {
     return NextResponse.json(
@@ -16,9 +32,11 @@ export async function GET(req: NextRequest, context: RouteContext) {
     );
   }
 
-  const token =
-    cookies().get("payload-token")?.value ||
-    cookies().get("auth-token")?.value;
+  const cookieStore = cookies();
+  const token = pickUsableAuthToken(
+    cookieStore.get("payload-token")?.value,
+    cookieStore.get("auth-token")?.value
+  );
   const forwardedPath = context.params.path
     .map((segment) => encodeURIComponent(segment))
     .join("/");

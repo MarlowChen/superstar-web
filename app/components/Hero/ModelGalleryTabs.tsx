@@ -21,6 +21,61 @@ const MODELS: Omit<ModelData, "groups">[] = [
   { id: "", name: "R18 & NSFW ", displayName: "R18 & NSFW ", description: "R18 & NSFW " },
 ];
 
+const FALLBACK_IMAGE_SETS: Record<string, string[]> = {
+  "988f6fdca24db156bcb38528": [
+    "/images/heros/demo/character1.png",
+    "/images/heros/demo/character2.png",
+    "/images/heros/demo/character3.png",
+    "/images/heros/demo/character4.png",
+    "/images/heros/demo/fight1.png",
+    "/images/heros/demo/fight2.png",
+  ],
+  "68ed9c1cad7d2563378060ed": [
+    "/images/heros/demo/character5.png",
+    "/images/heros/demo/character6.png",
+    "/images/heros/demo/character7.png",
+    "/images/heros/demo/character8.png",
+    "/images/heros/demo/scene1.png",
+    "/images/heros/demo/scene2.png",
+  ],
+  "68ed9c82cc3e600fe7f15ff2": [
+    "/images/heros/demo/material1.png",
+    "/images/heros/demo/material2.png",
+    "/images/heros/demo/material3.png",
+    "/images/heros/demo/material4.png",
+    "/images/heros/demo/scene3.png",
+    "/images/heros/demo/scene4.png",
+  ],
+  "68eb54598cab2cac2b49f873": [
+    "/images/heros/demo/fight1.png",
+    "/images/heros/demo/fight2.png",
+    "/images/heros/demo/fight3.png",
+    "/images/heros/demo/fight4.png",
+  ],
+  "68ebbb87a14057a087bf43c9": [
+    "/images/heros/demo/animal1.png",
+    "/images/heros/demo/animal2.png",
+    "/images/heros/demo/animal3.png",
+    "/images/heros/demo/animal4.png",
+  ],
+};
+
+const getFallbackGroups = (modelId: string, modelName: string): ImageGroup[] => {
+  const urls = FALLBACK_IMAGE_SETS[modelId] || FALLBACK_IMAGE_SETS[MODELS[0].id];
+
+  return [
+    {
+      taskId: `fallback-${modelId || "demo"}`,
+      prompt: `${modelName} demo gallery`,
+      loraModelName: modelName,
+      images: urls.map((url, index) => ({
+        id: `fallback-${modelId || "demo"}-${index + 1}`,
+        url,
+      })),
+    },
+  ];
+};
+
 const SCROLL_STEP = 260;
 
 /** 設定要鎖住的多個 model id（想鎖幾個就放幾個） */
@@ -87,6 +142,10 @@ const ModelGalleryTabs: React.FC = () => {
   const handleUpgradeToPremium = () => window.dispatchEvent(new CustomEvent("openPaymentDialog"));
 
   const fetchModelImages = async (modelId: string, pageNum: number) => {
+    if (!modelId) {
+      setHasMore(false);
+      return;
+    }
     if (!isPremium && pageNum > 1) { setHasMore(false); return; }
     if (imagesLoading) return;
     setImagesLoading(true);
@@ -95,8 +154,11 @@ const ModelGalleryTabs: React.FC = () => {
 
     try {
       const limit = 20;
+      const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL;
+      if (!serverUrl) throw new Error("Missing NEXT_PUBLIC_SERVER_URL");
+
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/model/${modelId}/images/${pageNum}/${limit}`,
+        `${serverUrl}/model/${modelId}/images/${pageNum}/${limit}`,
         { credentials: "include", signal: controller.signal }
       );
 
@@ -113,9 +175,15 @@ const ModelGalleryTabs: React.FC = () => {
       }));
 
       setHasMore(isPremium ? Boolean(data.hasNextPage) : false);
-    } catch (error) {
-      console.error("Failed to fetch images:", error);
-      showToast(t("fetch_images_failed"), true);
+    } catch {
+      if (pageNum === 1) {
+        setModels((prevModels) => prevModels.map((model) => {
+          if (model.id !== modelId) return model;
+          if (model.groups.length > 0) return model;
+          return { ...model, groups: getFallbackGroups(modelId, model.displayName) };
+        }));
+      }
+      setHasMore(false);
     } finally {
       clearTimeout(timeout);
       setImagesLoading(false);

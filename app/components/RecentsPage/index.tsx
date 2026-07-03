@@ -130,7 +130,7 @@ export default function RecentsPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[#f7fbff] text-[#10243a] dark:bg-[#09111b] dark:text-[#eff7ff]">
-      <div className="mx-auto flex h-full min-h-0 w-full max-w-5xl flex-col px-6 py-8 md:px-10">
+      <div className="mx-auto flex h-full min-h-0 w-full max-w-5xl flex-col px-6 pb-8 pt-20 md:px-10 md:py-8">
         <div className="shrink-0 space-y-6">
           <div className="space-y-2">
             <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#89a0b5] dark:text-[#6f8ba6]">
@@ -138,7 +138,7 @@ export default function RecentsPage() {
             </div>
             <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
               <div className="space-y-1">
-                <h1 className="text-3xl font-semibold tracking-[-0.03em]">{copy.title}</h1>
+                <h1 className="text-3xl font-semibold tracking-normal">{copy.title}</h1>
                 <p className="text-sm text-[#58718a] dark:text-[#a6bed2]">{copy.subtitle}</p>
               </div>
               <div className="text-sm text-[#89a0b5] dark:text-[#6f8ba6]">

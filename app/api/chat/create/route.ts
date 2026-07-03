@@ -1,10 +1,64 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { isMockAuthEnabled, pickUsableAuthToken } from "@/app/lib/mockAuth";
 
 export async function POST(req: NextRequest) {
-  const token =
-    cookies().get("payload-token")?.value ||
-    cookies().get("auth-token")?.value;
+  if (isMockAuthEnabled()) {
+    const body = await req.json().catch(() => ({}));
+    const message =
+      body && typeof body === "object" && typeof body.message === "string"
+        ? body.message
+        : "";
+    const payload = {
+      ok: true,
+      type: "chat",
+      conversationId: "mock-conversation-local",
+      message: {
+        role: "ASSISTANT",
+        content: message
+          ? `這是本機 mock 回覆：已收到「${message}」。`
+          : "這是本機 mock 回覆，可用來檢查聊天 UI。",
+      },
+    };
+
+    if ((req.headers.get("accept") || "").includes("text/event-stream")) {
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(
+            encoder.encode(
+              `event: progress\ndata: ${JSON.stringify({
+                phase: "mock_processing",
+                label: "本機 mock 正在回覆",
+                progressPercent: 70,
+              })}\n\n`
+            )
+          );
+          controller.enqueue(
+            encoder.encode(`event: final\ndata: ${JSON.stringify(payload)}\n\n`)
+          );
+          controller.close();
+        },
+      });
+
+      return new NextResponse(stream, {
+        status: 200,
+        headers: {
+          "content-type": "text/event-stream",
+          "cache-control": "no-cache, no-transform",
+          connection: "keep-alive",
+        },
+      });
+    }
+
+    return NextResponse.json(payload);
+  }
+
+  const cookieStore = cookies();
+  const token = pickUsableAuthToken(
+    cookieStore.get("payload-token")?.value,
+    cookieStore.get("auth-token")?.value
+  );
 
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

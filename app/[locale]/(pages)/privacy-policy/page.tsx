@@ -17,12 +17,96 @@ interface LegalDocument {
   sections: Section[];
 }
 
+const fallbackLegalDocuments: Record<string, Record<string, LegalDocument>> = {
+  "zh-TW": {
+    terms: {
+      type: "terms",
+      title: "服務條款",
+      sections: [
+        {
+          id: "terms-service",
+          title: "服務使用",
+          content:
+            "使用超星AI平台時，請遵守平台規範與相關法令。使用者需自行確認上傳素材具備必要權利，且不得用於侵害他人權益或違反法律的用途。",
+        },
+      ],
+    },
+    privacy: {
+      type: "privacy",
+      title: "隱私權政策",
+      sections: [
+        {
+          id: "privacy-data",
+          title: "資料處理",
+          content:
+            "平台會在提供登入、生成、作品管理、付款與客服支援等服務範圍內處理必要資料。若正式法律文件暫時無法連線，本頁會先顯示本地備援內容，避免使用者看到空白頁。",
+        },
+      ],
+    },
+  },
+  en: {
+    terms: {
+      type: "terms",
+      title: "Terms of Service",
+      sections: [
+        {
+          id: "terms-service",
+          title: "Service Use",
+          content:
+            "When using Superstar AI Platform, users must follow platform rules and applicable law. Users are responsible for ensuring they have the rights needed for uploaded materials.",
+        },
+      ],
+    },
+    privacy: {
+      type: "privacy",
+      title: "Privacy Policy",
+      sections: [
+        {
+          id: "privacy-data",
+          title: "Data Handling",
+          content:
+            "The platform processes necessary data for sign-in, generation, asset management, payments, and support. If the live legal API is unavailable, this local fallback prevents a blank page.",
+        },
+      ],
+    },
+  },
+  ja: {
+    terms: {
+      type: "terms",
+      title: "利用規約",
+      sections: [
+        {
+          id: "terms-service",
+          title: "サービス利用",
+          content:
+            "超星AIプラットフォームを利用する際は、プラットフォームの規約および適用法令を遵守してください。アップロード素材に必要な権利を有していることは利用者の責任です。",
+        },
+      ],
+    },
+    privacy: {
+      type: "privacy",
+      title: "プライバシーポリシー",
+      sections: [
+        {
+          id: "privacy-data",
+          title: "データの取り扱い",
+          content:
+            "ログイン、生成、作品管理、支払い、サポートに必要な範囲でデータを処理します。正式な法務APIに接続できない場合は、空白ページを避けるためローカルの予備内容を表示します。",
+        },
+      ],
+    },
+  },
+};
+
+const getFallbackLegalDocuments = (locale: string) =>
+  fallbackLegalDocuments[locale] || fallbackLegalDocuments.en;
+
 const TermsPage: React.FC = () => {
   const t = useTranslations("legal");
   const locale = useLocale();
   const router = useRouter();
   
-  const [legalDocs, setLegalDocs] = useState<{ [key: string]: LegalDocument }>({});
+  const [legalDocs, setLegalDocs] = useState<{ [key: string]: LegalDocument | null }>({});
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrolledToBottom, setScrolledToBottom] = useState(false);
@@ -32,34 +116,45 @@ const TermsPage: React.FC = () => {
     const fetchLegalDocuments = async () => {
       setIsLoading(true);
       try {
-        // 獲取當前語言
         const currentLang = locale;
-        const simplifiedLang = currentLang.startsWith("zh") ? "zh-TW" : "en";
-        
-        // 獲取所有文檔類型的法律文件
-        const responses = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/legal-terms?where[type][equals]=terms&where[locale][equals]=${simplifiedLang}&limit=1`),
-          fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/legal-terms?where[type][equals]=privacy&where[locale][equals]=${simplifiedLang}&limit=1`),
-          fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/legal-terms?where[type][equals]=copyright&where[locale][equals]=${simplifiedLang}&limit=1`),
-          fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/legal-terms?where[type][equals]=refund&where[locale][equals]=${simplifiedLang}&limit=1`),
-          fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/legal-terms?where[type][equals]=cookie&where[locale][equals]=${simplifiedLang}&limit=1`),
-        ]);
+        const simplifiedLang = currentLang.startsWith("zh")
+          ? "zh-TW"
+          : currentLang.startsWith("ja")
+            ? "ja"
+            : "en";
+        const documentTypes = ["terms", "privacy", "copyright", "refund", "cookie"];
+
+        const responses = await Promise.all(
+          documentTypes.map((type) =>
+            fetch(
+              `/api/legal-terms?where[type][equals]=${type}&where[locale][equals]=${simplifiedLang}&limit=1`
+            )
+          )
+        );
         
         // 處理響應
         const [terms, privacy, copyright, refund, cookie] = await Promise.all(
-          responses.map(response => response.json().then(data => data.docs[0]))
+          responses.map((response) => {
+            if (!response.ok) {
+              throw new Error(`Legal API responded ${response.status}`);
+            }
+            return response.json().then((data) => data.docs?.[0] || null);
+          })
         );
-        
-        setLegalDocs({
+
+        const nextDocs = {
           terms: terms ? { ...terms, sections: terms.sections || [] } : null,
           privacy: privacy ? { ...privacy, sections: privacy.sections || [] } : null,
           copyright: copyright ? { ...copyright, sections: copyright.sections || [] } : null,
           refund: refund ? { ...refund, sections: refund.sections || [] } : null,
           cookie: cookie ? { ...cookie, sections: cookie.sections || [] } : null,
-        });
+        };
+
+        const hasRemoteDoc = Object.values(nextDocs).some(Boolean);
+        setLegalDocs(hasRemoteDoc ? nextDocs : getFallbackLegalDocuments(locale));
         
-      } catch (error) {
-        console.error("Error fetching legal documents:", error);
+      } catch {
+        setLegalDocs(getFallbackLegalDocuments(locale));
       } finally {
         setIsLoading(false);
         // 載入完成後檢查一次滾動狀態
@@ -81,7 +176,6 @@ const TermsPage: React.FC = () => {
       const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
       const isAtBottom = scrollTop + clientHeight >= scrollHeight - 20;
       setScrolledToBottom(isAtBottom);
-      console.log('Scroll debug:', { scrollTop, scrollHeight, clientHeight, isAtBottom }); // 除錯用
     }
   };
 
@@ -167,7 +261,7 @@ const TermsPage: React.FC = () => {
                   <X className="w-8 h-8 text-gray-400" />
                 </div>
                 <p className="text-gray-500 dark:text-gray-400">
-                  {t("document_not_found")}
+                  {t("legal.documentNotFound")}
                 </p>
               </div>
             )}

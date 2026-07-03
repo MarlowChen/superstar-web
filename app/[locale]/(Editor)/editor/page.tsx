@@ -1,12 +1,13 @@
 'use client';
 
 import { Editor } from '@/app/components/editor/Editor';
-import React, { useState } from 'react';
+import { useEditorStore } from '@/app/lib/editor/store';
+import React, { useCallback, useState } from 'react';
 
 export default function EditorPage() {
   const [injectedAsset, setInjectedAsset] = useState<{ url: string; type: 'video' | 'image' | 'audio'; label?: string } | null>(null);
   
-const handlePickMedia = (type: 'video' | 'image' | 'audio') => {
+  const handlePickMedia = (type: 'video' | 'image' | 'audio') => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = type === 'audio' ? 'audio/*' : type === 'image' ? 'image/*' : 'video/*';
@@ -25,6 +26,28 @@ const handlePickMedia = (type: 'video' | 'image' | 'audio') => {
     
     input.click();
   };
+
+  const handleExportProject = useCallback(() => {
+    const { project } = useEditorStore.getState();
+    const exportedAt = new Date().toISOString();
+    const payload = {
+      schemaVersion: 1,
+      exportedAt,
+      project,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: 'application/json;charset=utf-8',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = `superstar-editor-project-${exportedAt.replace(/[:.]/g, '-')}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }, []);
   
   return (
     <Editor
@@ -32,7 +55,7 @@ const handlePickMedia = (type: 'video' | 'image' | 'audio') => {
       onAssetInjected={() => setInjectedAsset(null)}
       onPickMedia={handlePickMedia}
       onBack={() => history.back()}
-      onExport={() => alert('匯出功能待實作')}
+      onExport={handleExportProject}
     />
   );
 }

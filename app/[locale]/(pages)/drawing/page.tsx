@@ -10,6 +10,7 @@ import UpgradePopupProvider from "../../../components/UpgradePopupAd/UpgradePopu
 type DrawingPageProps = {
   params: { locale: string };
   searchParams?: {
+    tool?: string;
     templatePrompt?: string;
     templateType?: "image" | "video" | "audio" | "text" | "chat";
     templateAspectRatio?: string;
@@ -38,18 +39,67 @@ function sanitizeTemplatePrompt(value?: string) {
   return prompt;
 }
 
+function getToolTemplate(tool?: string): {
+  type: "image" | "video" | "audio" | "text" | "chat" | null;
+  prompt: string;
+} {
+  const normalized = (tool || "").trim().toLowerCase();
+
+  if (!normalized) {
+    return { type: null, prompt: "" };
+  }
+
+  if (normalized === "image") {
+    return { type: "image", prompt: "" };
+  }
+
+  if (normalized === "video") {
+    return { type: "video", prompt: "" };
+  }
+
+  if (normalized === "audio" || normalized === "voice" || normalized === "sound") {
+    return { type: "audio", prompt: "" };
+  }
+
+  if (normalized === "text" || normalized === "copywriting" || normalized === "script") {
+    return { type: "text", prompt: "" };
+  }
+
+  if (normalized === "chat") {
+    return { type: "chat", prompt: "" };
+  }
+
+  if (
+    normalized === "lipsync" ||
+    normalized === "lip-sync" ||
+    normalized === "avatar" ||
+    normalized === "face-swap" ||
+    normalized === "faceswap"
+  ) {
+    return {
+      type: "video",
+      prompt: "我想製作一段 AI 對嘴或數位人影片，請幫我整理需要的素材與生成提示。",
+    };
+  }
+
+  return { type: null, prompt: "" };
+}
+
 export default async function DrawingPage({ searchParams }: DrawingPageProps) {
-  const templatePrompt = sanitizeTemplatePrompt(searchParams?.templatePrompt);
+  const toolTemplate = getToolTemplate(searchParams?.tool);
+  const templatePrompt =
+    sanitizeTemplatePrompt(searchParams?.templatePrompt) || toolTemplate.prompt;
+  const templateType = searchParams?.templateType || toolTemplate.type;
   const initialTemplate =
     templatePrompt ||
-    searchParams?.templateType ||
+    templateType ||
     searchParams?.templateAspectRatio ||
     searchParams?.templateCount ||
     searchParams?.modelId ||
     searchParams?.selectedImageUrl
       ? {
           prompt: templatePrompt,
-          type: searchParams?.templateType || null,
+          type: templateType || null,
           aspectRatio: searchParams?.templateAspectRatio || "1:1",
           count: Number(searchParams?.templateCount) || 1,
           modelId: searchParams?.modelId || "",

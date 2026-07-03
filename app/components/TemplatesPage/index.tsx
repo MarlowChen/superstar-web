@@ -269,11 +269,11 @@ export default function TemplatesPage({ locale }: { locale: string }) {
   };
 
   return (
-    <main className="app-soft-bg min-h-screen px-4 py-6 md:px-8 md:py-8 overflow-y-auto">
+    <main className="app-soft-bg min-h-screen overflow-y-auto px-4 pb-6 pt-20 md:px-8 md:py-8">
       <div className="mx-auto max-w-6xl">
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-[-0.03em] text-[#243555] dark:text-[#f1f5ff] md:text-4xl">
+            <h1 className="text-2xl font-semibold tracking-normal text-[#243555] dark:text-[#f1f5ff] md:text-4xl">
               {text.title}
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-7 text-[#68809f] dark:text-[#aebbd6] md:text-base">
@@ -324,7 +324,7 @@ export default function TemplatesPage({ locale }: { locale: string }) {
           </div>
         ) : (
           <div className="space-y-4">
-            {templates.map((template) => {
+            {templates.map((template, templateIndex) => {
               const coverUrl =
                 normalizeTemplateMediaUrl(template.cover) ||
                 normalizeTemplateMediaUrl(template.videoConfig?.demoPoster) ||
@@ -351,7 +351,7 @@ export default function TemplatesPage({ locale }: { locale: string }) {
                   className="overflow-hidden rounded-[24px] border border-[rgba(194,206,255,0.72)] bg-white/72 shadow-[0_18px_40px_rgba(145,160,218,0.12)] backdrop-blur-md dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_18px_40px_rgba(0,0,0,0.2)]"
                 >
                   <div className="flex flex-col md:flex-row">
-                    <div className="relative aspect-[4/5] w-full overflow-hidden bg-[linear-gradient(135deg,rgba(111,222,210,0.14),rgba(142,144,255,0.18))] sm:aspect-[16/10] md:aspect-auto md:min-h-[220px] md:w-[280px] md:flex-none">
+                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-[linear-gradient(135deg,rgba(111,222,210,0.14),rgba(142,144,255,0.18))] sm:aspect-[16/10] md:aspect-auto md:min-h-[220px] md:w-[280px] md:flex-none">
                       {template.category === "video" && previewVideoUrl ? (
                         <video
                           src={previewVideoUrl}
@@ -369,6 +369,7 @@ export default function TemplatesPage({ locale }: { locale: string }) {
                           alt={template.cover?.alt || template.title}
                           fill
                           sizes="(max-width: 768px) 100vw, 280px"
+                          priority={templateIndex === 0}
                           className="object-contain p-4"
                         />
                       )}
@@ -401,7 +402,7 @@ export default function TemplatesPage({ locale }: { locale: string }) {
                         )}
                       </div>
 
-                      <h2 className="mt-3 text-lg font-semibold tracking-[-0.02em] text-[#243555] dark:text-[#f1f5ff]">
+                      <h2 className="mt-3 text-lg font-semibold tracking-normal text-[#243555] dark:text-[#f1f5ff]">
                         {template.title}
                       </h2>
                       {template.summary && (

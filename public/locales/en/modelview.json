@@ -46,6 +46,7 @@
   "show_less": "Less",
   "no_published_images": "No published images",
   "start_creating_hint": "Start creating to see your images here",
+  "fetch_images_failed": "Images are temporarily unavailable",
   "images_downloaded_success": "Images downloaded successfully!",
   "images_download_failed": "Failed to download images",
   "download_all": "Download All",

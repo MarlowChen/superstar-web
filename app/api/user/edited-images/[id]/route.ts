@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMeUser } from "@/app/utilities/getUser";
 
+const debugEditedImages = (...args: unknown[]) => {
+  if (process.env.NEXT_PUBLIC_DEBUG_AUTH === "true") {
+    console.info(...args);
+  }
+};
+
 // 刪除編輯圖片
 export async function DELETE(
   request: NextRequest,
@@ -26,7 +32,7 @@ export async function DELETE(
 
     // TODO: 從數據庫刪除編輯圖片
     // 這裡先模擬刪除成功
-    console.log(`Deleting edited image with ID: ${imageId}`);
+    debugEditedImages(`Deleting edited image with ID: ${imageId}`);
 
     return NextResponse.json({
       success: true,
@@ -41,7 +47,6 @@ export async function DELETE(
     );
   }
 }
-
 
 
 

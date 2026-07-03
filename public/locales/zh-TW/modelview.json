@@ -46,6 +46,7 @@
   "show_less": "收起",
   "no_published_images": "暫無發布的圖片",
   "start_creating_hint": "開始創作，您的圖片將顯示在這裡",
+  "fetch_images_failed": "圖片暫時無法載入",
   "images_downloaded_success": "圖片下載成功！",
   "images_download_failed": "圖片下載失敗",
   "download_all": "下載全部",

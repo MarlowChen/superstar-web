@@ -8,6 +8,28 @@ dotenv.config();
 // 創建 next-intl 插件
 const withNextIntl = createNextIntlPlugin('./app/i18n/request.ts');
 
+const getHostname = (value) => {
+  if (!value) return null;
+
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return value.replace(/^https?:\/\//, '').split('/')[0] || null;
+  }
+};
+
+const imageHostnames = [
+  getHostname(process.env.NEXT_PUBLIC_SERVER_URL),
+  getHostname(process.env.NEXT_PUBLIC_URL),
+  "nyc3.digitaloceanspaces.com",
+  "aierone.nyc3.cdn.digitaloceanspaces.com",
+  "aierone.nyc3.digitaloceanspaces.com",
+  "psf.nyc3.cdn.digitaloceanspaces.com",
+  "psf.nyc3.digitaloceanspaces.com",
+  "tw-01.sgw.glows.ai",
+  "tempfile.aiquickdraw.com"
+].filter(Boolean);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -33,18 +55,12 @@ const nextConfig = {
         hostname: "cdn2.stablediffusionapi.com",
         pathname: "/**",
       },
+      ...imageHostnames.map((hostname) => ({
+        protocol: "https",
+        hostname,
+        pathname: "/**",
+      })),
     ],
-    domains: [
-      process.env.NEXT_PUBLIC_SERVER_URL,
-      process.env.NEXT_PUBLIC_URL,
-      "nyc3.digitaloceanspaces.com",
-      "aierone.nyc3.cdn.digitaloceanspaces.com",
-      "aierone.nyc3.digitaloceanspaces.com",
-      "tw-01.sgw.glows.ai",
-      "tempfile.aiquickdraw.com"
-    ]
-      .filter(Boolean)
-      .map((url) => url.replace(/https?:\/\//, "")),
   },
   async rewrites() {
     const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL;

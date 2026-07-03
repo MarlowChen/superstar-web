@@ -562,9 +562,7 @@ const PaymentModelDialog: React.FC<ModelDetailsDialogProps> = ({
 
 
   const fetchUserStatus = useCallback(async () => {
-    const response = await authenticatedRequest(
-      `${process.env.NEXT_PUBLIC_SERVER_URL}/user-status`
-    );
+    const response = await authenticatedRequest("/api/billing/user-status");
 
     if (!response) {
       throw new Error("Failed to fetch user status");
@@ -721,13 +719,13 @@ const PaymentModelDialog: React.FC<ModelDetailsDialogProps> = ({
         currentPointType: subStatus.currentPointType,
         availableUpgrades: subStatus.availableUpgrades,
         upgradeType: upgradeType,
-        endpoint: `${process.env.NEXT_PUBLIC_SERVER_URL}/${endpoint}`,
+        endpoint: `/api/billing/${endpoint}`,
         requestMethod: requestData.method,
         requestBody: requestData.body
       });
       
       const response = await authenticatedRequest(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/${endpoint}`,
+        `/api/billing/${endpoint}`,
         requestData
       );
 
@@ -807,7 +805,7 @@ const PaymentModelDialog: React.FC<ModelDetailsDialogProps> = ({
 
   const fetchOrderPreview = async (transactionType: string, locale: string) => {
     const response = await authenticatedRequest(
-      `${process.env.NEXT_PUBLIC_SERVER_URL}/order-preview?transactionType=${transactionType}&locale=${locale}`
+      `/api/billing/order-preview?transactionType=${encodeURIComponent(transactionType)}&locale=${encodeURIComponent(locale)}`
     );
 
     if (!response) {
@@ -968,7 +966,7 @@ const PaymentModelDialog: React.FC<ModelDetailsDialogProps> = ({
     console.log('🔍 Creating checkout session:', {
       transactionType,
       path,
-      url: `${process.env.NEXT_PUBLIC_SERVER_URL}/create-checkout`
+      url: "/api/billing/create-checkout"
     });
 
     try {
@@ -978,7 +976,7 @@ const PaymentModelDialog: React.FC<ModelDetailsDialogProps> = ({
       });
 
       const requestPromise = authenticatedRequest(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/create-checkout`,
+        "/api/billing/create-checkout",
         {
           method: "POST",
           body: JSON.stringify({ transactionType, path }),
@@ -1137,8 +1135,10 @@ const PaymentModelDialog: React.FC<ModelDetailsDialogProps> = ({
           <div className="flex h-full w-full flex-col overflow-hidden bg-custom-white dark:bg-custom-white-dark">
             <div className="relative flex flex-col items-center bg-custom-gray/35 p-5 dark:bg-white/[0.03]">
               <button
+                type="button"
                 className="absolute right-4 top-4 rounded-xl p-1.5 text-gray-400 transition-colors duration-200 hover:bg-white/70 hover:text-gray-600 dark:hover:bg-white/[0.04] dark:hover:text-gray-300"
                 onClick={handleClose}
+                aria-label={t("close_dialog")}
               >
                 <X className="w-6 h-6" />
               </button>

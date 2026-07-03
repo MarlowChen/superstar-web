@@ -1,4 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { extractAuthPayload, extractErrorMessage, getBackendUrl } from "../utils";
+import {
+  getMockUser,
+  isMockAuthEnabled,
+  MOCK_AUTH_TOKEN,
+} from "@/app/lib/mockAuth";
 
 const COOKIE_NAME = "payload-token";
 
@@ -14,6 +20,31 @@ function buildCookieOptions(exp?: number) {
   };
 }
 
+async function loginAfterRegister(args: {
+  backendUrl: string;
+  email: string;
+  password: string;
+}) {
+  const loginResponse = await fetch(`${args.backendUrl}/auth/password-login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email: args.email,
+      password: args.password,
+    }),
+  });
+
+  const loginData = await loginResponse.json().catch(() => null);
+  return {
+    ok: loginResponse.ok,
+    status: loginResponse.status,
+    data: loginData,
+    payload: extractAuthPayload(loginData),
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { email, password, confirmPassword, name, username } =
@@ -26,8 +57,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (isMockAuthEnabled()) {
+      const result = NextResponse.json({
+        user: {
+          ...getMockUser(email),
+          name: name || getMockUser(email).name,
+          username: username || getMockUser(email).username,
+        },
+      });
+      const cookieOptions = buildCookieOptions();
+
+      result.cookies.set(COOKIE_NAME, MOCK_AUTH_TOKEN, cookieOptions);
+      result.cookies.set("auth-token", MOCK_AUTH_TOKEN, cookieOptions);
+
+      return result;
+    }
+
+    const backendUrl = getBackendUrl();
+    if (!backendUrl) {
+      return NextResponse.json(
+        { error: "NEXT_PUBLIC_SERVER_URL is required" },
+        { status: 500 }
+      );
+    }
+
     const registerResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/register`,
+      `${backendUrl}/auth/register`,
       {
         method: "POST",
         headers: {
@@ -48,32 +103,49 @@ export async function POST(req: NextRequest) {
     if (!registerResponse.ok) {
       return NextResponse.json(
         {
-          error:
-            registerData?.errors?.[0]?.message ||
-            registerData?.error ||
-            registerData?.message ||
-            "Register failed",
+          error: extractErrorMessage(registerData, "Register failed"),
         },
         { status: registerResponse.status || 500 }
       );
     }
 
-    if (!registerData?.token || !registerData?.user) {
+    let authPayload = extractAuthPayload(registerData);
+
+    if (!authPayload.token || !authPayload.user) {
+      const loginResult = await loginAfterRegister({
+        backendUrl,
+        email,
+        password,
+      });
+
+      if (loginResult.ok && loginResult.payload.token && loginResult.payload.user) {
+        authPayload = loginResult.payload;
+      } else {
+        return NextResponse.json(
+          {
+            error: extractErrorMessage(
+              loginResult.data,
+              "Register succeeded but login failed"
+            ),
+          },
+          { status: loginResult.status || 500 }
+        );
+      }
+    }
+
+    if (!authPayload.token || !authPayload.user) {
       return NextResponse.json(
         {
-          error:
-            registerData?.errors?.[0]?.message ||
-            registerData?.error ||
-            registerData?.message ||
-            "Register succeeded but login failed",
+          error: extractErrorMessage(registerData, "Register succeeded but login failed"),
         },
         { status: registerResponse.status || 500 }
       );
     }
 
-    const result = NextResponse.json({ user: registerData.user });
-    result.cookies.set(COOKIE_NAME, registerData.token, buildCookieOptions(registerData.exp));
-    result.cookies.set("auth-token", registerData.token, buildCookieOptions(registerData.exp));
+    const result = NextResponse.json({ user: authPayload.user });
+    const cookieOptions = buildCookieOptions(authPayload.exp);
+    result.cookies.set(COOKIE_NAME, authPayload.token, cookieOptions);
+    result.cookies.set("auth-token", authPayload.token, cookieOptions);
 
     return result;
   } catch (error) {

@@ -11,6 +11,8 @@ import { useTranslations } from "next-intl";
 import { SettingIcon } from "../Drawing/icons/SettingIcon";
 import { HeartIcon } from "@/app/icon/CollectIcon";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { showToast } from "../CustomToast";
+import { createPortal } from "react-dom";
 
 type Theme = "light" | "dark";
 
@@ -83,6 +85,8 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   const { user, logout } = useAuth();
   const [isClient, setIsClient] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<ConversationListItem | null>(null);
+  const [isDeletingConversation, setIsDeletingConversation] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const t = useTranslations("navigation");
 
@@ -101,6 +105,31 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     lng === "zh-TW" ? "最近" : lng === "ja" ? "最近" : "Recent";
   const templatesLabel =
     lng === "zh-TW" ? "模板" : lng === "ja" ? "テンプレート" : "Templates";
+  const deleteDialogTitle =
+    lng === "zh-TW" ? "刪除對話？" : lng === "ja" ? "会話を削除しますか？" : "Delete conversation?";
+  const deleteDialogBody =
+    lng === "zh-TW"
+      ? "這個動作無法復原，對話紀錄會從列表移除。"
+      : lng === "ja"
+        ? "この操作は元に戻せません。会話履歴は一覧から削除されます。"
+        : "This action cannot be undone. The conversation will be removed from the list.";
+  const cancelLabel = lng === "zh-TW" ? "取消" : lng === "ja" ? "キャンセル" : "Cancel";
+  const deleteLabel = lng === "zh-TW" ? "刪除" : lng === "ja" ? "削除" : "Delete";
+  const deletingLabel = lng === "zh-TW" ? "刪除中..." : lng === "ja" ? "削除中..." : "Deleting...";
+  const closeDeleteDialogLabel =
+    lng === "zh-TW"
+      ? "關閉刪除對話視窗"
+      : lng === "ja"
+        ? "削除確認を閉じる"
+        : "Close delete confirmation";
+  const deleteSuccessMessage =
+    lng === "zh-TW" ? "已刪除對話" : lng === "ja" ? "会話を削除しました" : "Conversation deleted";
+  const deleteFailureMessage =
+    lng === "zh-TW"
+      ? "刪除對話失敗，請稍後再試"
+      : lng === "ja"
+        ? "会話の削除に失敗しました。しばらくしてからもう一度お試しください"
+        : "Failed to delete conversation. Please try again later.";
   const isNewChatActive =
     pathname === `/${lng}/drawing` && !selectedConversationId;
 
@@ -173,19 +202,15 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     return () => window.removeEventListener("conversation-created", handleConversationCreated);
   }, [fetchConversations, user]);
 
-  const handleDeleteConversation = useCallback(async (conversationId: string) => {
-    const confirmed = window.confirm(
-      lng === "zh-TW"
-        ? "確定要刪除這個對話嗎？"
-        : lng === "ja"
-          ? "この会話を削除しますか？"
-          : "Delete this conversation?"
-    );
+  const requestDeleteConversation = useCallback((conversation: ConversationListItem) => {
+    setDeleteTarget(conversation);
+  }, []);
 
-    if (!confirmed) return;
-
+  const handleDeleteConversation = useCallback(async () => {
+    if (!deleteTarget) return;
+    setIsDeletingConversation(true);
     try {
-      const res = await fetch(`/api/chat/conversations/${encodeURIComponent(conversationId)}`, {
+      const res = await fetch(`/api/chat/conversations/${encodeURIComponent(deleteTarget.id)}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -201,22 +226,20 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
         throw new Error(detail || "Failed to delete conversation");
       }
 
-      setConversations((prev) => prev.filter((item) => item.id !== conversationId));
+      setConversations((prev) => prev.filter((item) => item.id !== deleteTarget.id));
+      showToast(deleteSuccessMessage);
 
-      if (selectedConversationId === conversationId) {
+      if (selectedConversationId === deleteTarget.id) {
         startNewConversation();
       }
+      setDeleteTarget(null);
     } catch (error) {
       console.error("Failed to delete conversation:", error);
-      window.alert(
-        lng === "zh-TW"
-          ? "刪除對話失敗，請稍後再試"
-          : lng === "ja"
-            ? "会話の削除に失敗しました。しばらくしてからもう一度お試しください"
-            : "Failed to delete conversation. Please try again later."
-      );
+      showToast(deleteFailureMessage, true);
+    } finally {
+      setIsDeletingConversation(false);
     }
-  }, [lng, selectedConversationId, startNewConversation]);
+  }, [deleteFailureMessage, deleteSuccessMessage, deleteTarget, selectedConversationId, startNewConversation]);
 
   /* ────────────────────────────────
      NavItem — refined micro-component
@@ -515,9 +538,10 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
               <Image
                 src="/images/logo-small.svg"
                 alt="超星AI平台"
-                width={30}
+                width={27}
                 height={30}
                 className="block object-contain"
+                style={{ width: "auto", height: 30 }}
                 priority
               />
             </Link>
@@ -548,9 +572,10 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                 <Image
                   src="/images/logo-small.svg"
                   alt="超星AI平台"
-                  width={28}
+                  width={25}
                   height={28}
                   className="block object-contain"
+                  style={{ width: "auto", height: 28 }}
                   priority
                 />
               </span>
@@ -723,7 +748,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
-                            handleDeleteConversation(conversation.id);
+                            requestDeleteConversation(conversation);
                           }}
                           style={{
                             display: "flex",
@@ -738,7 +763,8 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                             cursor: "pointer",
                             flexShrink: 0,
                           }}
-                          title={lng === "zh-TW" ? "刪除" : lng === "ja" ? "削除" : "Delete"}
+                          aria-label={deleteLabel}
+                          title={deleteLabel}
                         >
                           <Trash2 size={13} />
                         </button>
@@ -977,6 +1003,75 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
             </div>
           )}
         </div>
+
+        {deleteTarget && createPortal(
+          <div
+            className="fixed inset-0 z-[80] flex items-center justify-center px-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-conversation-title"
+          >
+            <button
+              aria-label={closeDeleteDialogLabel}
+              className="absolute inset-0 cursor-default bg-black/45 backdrop-blur-sm"
+              onClick={() => {
+                if (!isDeletingConversation) setDeleteTarget(null);
+              }}
+            />
+            <div
+              className="relative w-full max-w-[360px] rounded-2xl border p-5 shadow-2xl"
+              style={{
+                background: tk.bgFloat,
+                borderColor: tk.border,
+                color: tk.text1,
+              }}
+            >
+              <div
+                id="delete-conversation-title"
+                className="text-base font-semibold"
+              >
+                {deleteDialogTitle}
+              </div>
+              <p className="mt-2 text-sm leading-6" style={{ color: tk.text2 }}>
+                {deleteDialogBody}
+              </p>
+              <div
+                className="mt-3 truncate rounded-lg px-3 py-2 text-sm"
+                style={{
+                  background: theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(88,104,156,0.08)",
+                  color: tk.text2,
+                }}
+                title={deleteTarget.title || deleteTarget.summary || newChatLabel}
+              >
+                {deleteTarget.title || deleteTarget.summary || newChatLabel}
+              </div>
+              <div className="mt-5 flex justify-end gap-2">
+                <button
+                  type="button"
+                  disabled={isDeletingConversation}
+                  onClick={() => setDeleteTarget(null)}
+                  className="rounded-lg px-4 py-2 text-sm font-medium transition disabled:opacity-50"
+                  style={{
+                    color: tk.text2,
+                    background: theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(88,104,156,0.08)",
+                  }}
+                >
+                  {cancelLabel}
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeletingConversation}
+                  onClick={handleDeleteConversation}
+                  className="rounded-lg px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-wait disabled:opacity-70"
+                  style={{ background: tk.danger }}
+                >
+                  {isDeletingConversation ? deletingLabel : deleteLabel}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
         </div>
 
         {/* ── Dialogs ── */}

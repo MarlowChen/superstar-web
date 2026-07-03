@@ -15,6 +15,12 @@ import { showToast } from "../../components/CustomToast";
 import { usePathname, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Style } from "@/app/services/styleSwitcherApi";
+import {
+  getMockUser,
+  isMockAuthEnabled,
+  MOCK_USER_POINT,
+  MOCK_USER_SETTINGS,
+} from "@/app/lib/mockAuth";
 
 // 新增使用者設定類型
 export interface UserSettings {
@@ -111,7 +117,9 @@ export const AuthProvider: React.FC<{
     pathname,
     sessionExpiredMessage: t("Session_expired"),
   });
-  const [user, setUser] = useState<User | null>(initialUser);
+  const [user, setUser] = useState<User | null>(
+    initialUser ?? (isMockAuthEnabled() ? getMockUser() : null)
+  );
   const [loading, setLoading] = useState(true);
   const [point, setPoint] = useState<number>(0);
   const [userPoint, setUserPoint] = useState<UserPoint | null>(null);
@@ -183,6 +191,12 @@ export const AuthProvider: React.FC<{
   );
 
   const updateUserPoint = useCallback(async () => {
+    if (isMockAuthEnabled()) {
+      setPoint(MOCK_USER_POINT.points);
+      setUserPoint(MOCK_USER_POINT);
+      return MOCK_USER_POINT;
+    }
+
     if (!userId) {
       return null;
     }
@@ -206,6 +220,11 @@ export const AuthProvider: React.FC<{
 
   // 獲取使用者設定
   const getUserSettings = useCallback(async () => {
+    if (isMockAuthEnabled()) {
+      setUserSettings(MOCK_USER_SETTINGS);
+      return;
+    }
+
     if (!userId) return;
 
     try {
@@ -225,6 +244,15 @@ export const AuthProvider: React.FC<{
   // 更新使用者設定
   const updateUserSettings = useCallback(
     async (settings: Partial<UserSettings>) => {
+      if (isMockAuthEnabled()) {
+        setUserSettings((current) => ({
+          ...MOCK_USER_SETTINGS,
+          ...(current || {}),
+          ...settings,
+        }));
+        return;
+      }
+
       if (!user) return;
 
       try {
@@ -249,6 +277,16 @@ export const AuthProvider: React.FC<{
   // 更新語言設定
   const updateLanguage = useCallback(
     async (language: string) => {
+      if (isMockAuthEnabled()) {
+        setUserSettings((current) => ({
+          ...MOCK_USER_SETTINGS,
+          ...(current || {}),
+          language,
+          displayLanguage: language,
+        }));
+        return;
+      }
+
       if (!user) return;
 
       try {
@@ -273,6 +311,18 @@ export const AuthProvider: React.FC<{
   // 更新 Lora 模型設定
   const updateLoraModel = useCallback(
     async (loraModel: string) => {
+      if (isMockAuthEnabled()) {
+        setUserSettings((current) => ({
+          ...MOCK_USER_SETTINGS,
+          ...(current || {}),
+          selectLoraModel: {
+            id: loraModel,
+            title: loraModel,
+          } as LoraModel,
+        }));
+        return;
+      }
+
       if (!user) return;
 
       try {
@@ -297,6 +347,17 @@ export const AuthProvider: React.FC<{
   // 新增：更新風格設定
   const updateStyle = useCallback(
     async (styleId: string) => {
+      if (isMockAuthEnabled()) {
+        setUserSettings((current) => ({
+          ...MOCK_USER_SETTINGS,
+          ...(current || {}),
+          selectStyle: {
+            id: styleId,
+          } as Style,
+        }));
+        return;
+      }
+
       if (!user) return;
 
       try {
@@ -321,6 +382,16 @@ export const AuthProvider: React.FC<{
   // 更新主題設定
   const updateTheme = useCallback(
     async (theme: string) => {
+      if (isMockAuthEnabled()) {
+        setUserSettings((current) => ({
+          ...MOCK_USER_SETTINGS,
+          ...(current || {}),
+          theme,
+          displayTheme: theme,
+        }));
+        return;
+      }
+
       if (!user) return;
 
       try {
@@ -344,6 +415,16 @@ export const AuthProvider: React.FC<{
 
   const updateProfile = useCallback(
     async (profile: { name?: string; username?: string; bio?: string; avatar?: string | null }) => {
+      if (isMockAuthEnabled()) {
+        const updatedUser = {
+          ...getMockUser(user?.email),
+          ...(user || {}),
+          ...profile,
+        };
+        setUser(updatedUser);
+        return updatedUser;
+      }
+
       if (!user) return null;
 
       try {
@@ -371,6 +452,12 @@ export const AuthProvider: React.FC<{
 
   const checkAuthStatus = useCallback(async () => {
     setLoading(true);
+    if (isMockAuthEnabled()) {
+      setUser(getMockUser());
+      setLoading(false);
+      return getMockUser();
+    }
+
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => controller.abort(), 4500);
     try {

@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import { cookies } from "next/headers";
+import { pickUsableAuthToken } from "./mockAuth";
 
 class ApiClient {
   private static instance: ApiClient;
@@ -26,9 +27,11 @@ class ApiClient {
         // 在發送請求之前做些什麼
         // 例如，添加授權標頭
 
-        const token =
-          cookies().get("payload-token")?.value ||
-          cookies().get("auth-token")?.value;
+        const cookieStore = cookies();
+        const token = pickUsableAuthToken(
+          cookieStore.get("payload-token")?.value,
+          cookieStore.get("auth-token")?.value
+        );
         if (token) {
           config.headers["Authorization"] = `JWT ${token}`;
           config.headers["Cookie"] = `payload-token=${token}; auth-token=${token}`;

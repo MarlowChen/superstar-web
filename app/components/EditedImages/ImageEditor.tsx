@@ -56,6 +56,7 @@ import {
   waitForTaskFirstMediaUrl,
   waitForTaskSuccess,
 } from "@/app/lib/taskSseWatcher";
+import { showToast } from "../CustomToast";
 
 /* =======================
    Types
@@ -110,6 +111,9 @@ function emptyPng(): string {
    ======================= */
 export default function ImageEditor({ initialImage }: EditorProps) {
   const t = useTranslations("edited");
+  const showEditorError = useCallback((message: string) => {
+    showToast(message, true);
+  }, []);
   const [isMobileDrawingMode, setIsMobileDrawingMode] = useState(false);
   const [mobileEditingLayerId, setMobileEditingLayerId] = useState<
     string | null
@@ -741,7 +745,7 @@ if (status !== "COMPLETED" && status !== "FAILED") {
      ======================= */
   const mergeLayers = async (ids: string[]) => {
     if (ids.length < 2) {
-      alert(t("need_at_least_2_layers_to_merge"));
+      showEditorError(t("need_at_least_2_layers_to_merge"));
       return;
     }
     try {
@@ -1286,7 +1290,7 @@ if (status !== "COMPLETED" && status !== "FAILED") {
   ) => {
     // 1. 基本檢查
     if (selectedLayerIds.length !== 1) {
-      alert(t("please_select_single_layer"));
+      showEditorError(t("please_select_single_layer"));
       return;
     }
   
@@ -1456,7 +1460,7 @@ if (status !== "COMPLETED" && status !== "FAILED") {
     } catch (err: unknown) {
       console.error(err);
       const message = err instanceof Error ? err.message : "發生未知錯誤";
-      alert(message);
+      showEditorError(message);
   
       // 錯誤時的清理
       api.completeAIJob(jobId, false);
@@ -1480,7 +1484,7 @@ if (status !== "COMPLETED" && status !== "FAILED") {
     referenceImageName?: string
   ) => {
     if (selectedLayerIds.length !== 1) {
-      alert(t("please_select_single_layer"));
+      showEditorError(t("please_select_single_layer"));
       return;
     }
     const layerId = selectedLayerIds[0];
@@ -1598,7 +1602,7 @@ if (status !== "COMPLETED" && status !== "FAILED") {
         typeof err === "object" && err && "message" in err
           ? String((err as { message?: unknown }).message ?? "")
           : "";
-      alert(message || t("action_edit_error"));
+      showEditorError(message || t("action_edit_error"));
 
       // 🔥 失敗時清除 pending 狀態
       api.completeAIJob(jobId, false);
@@ -1902,7 +1906,7 @@ if (status !== "COMPLETED" && status !== "FAILED") {
       : stackBottomToTop.map((l) => l.id);
 
     if (rawIds.length < 2) {
-      alert(
+      showEditorError(
         hasSelection ? t("need_at_least_2_layers_to_merge") : t("canvas_mode_need_2_visible_layers")
       );
       return;
@@ -2098,7 +2102,7 @@ if (status !== "COMPLETED" && status !== "FAILED") {
       updateHistoryState();
     } catch (err) {
       console.error("❌ 合併錯誤:", err);
-      alert(err instanceof Error ? err.message : t("merge_error"));
+      showEditorError(err instanceof Error ? err.message : t("merge_error"));
 
       // 🔥 失敗時清除 pending 狀態
       // 🔥 失敗時清除 pending 狀態
@@ -2221,7 +2225,7 @@ if (status !== "COMPLETED" && status !== "FAILED") {
       api.setEraserAction?.("restore");
     } catch (err: unknown) {
       console.error(err);
-      alert(err instanceof Error ? err.message : t("background_removal_error"));
+      showEditorError(err instanceof Error ? err.message : t("background_removal_error"));
 
       // 🔥 失敗時清除 pending 狀態
       api.completeAIJob(jobId, false);
@@ -2318,7 +2322,7 @@ if (status !== "COMPLETED" && status !== "FAILED") {
  
       } catch (err: unknown) {
         console.error(err);
-        alert(err instanceof Error ? err.message : t("upscale_error"));
+        showEditorError(err instanceof Error ? err.message : t("upscale_error"));
   
         // 🔥 失敗時清除 pending 狀態
         api.completeAIJob(jobId, false);
@@ -2479,7 +2483,7 @@ if (status !== "COMPLETED" && status !== "FAILED") {
 
   const handleLayerSeparation = async () => {
     if (selectedLayerIds.length !== 1) {
-      alert(t("please_select_single_layer_for_split"));
+      showEditorError(t("please_select_single_layer_for_split"));
       return;
     }
     const layerId = selectedLayerIds[0];
@@ -2641,7 +2645,7 @@ if (status !== "COMPLETED" && status !== "FAILED") {
       }
     } catch (err: unknown) {
       console.error(err);
-      alert(err instanceof Error ? err.message : t("layer_split_error"));
+      showEditorError(err instanceof Error ? err.message : t("layer_split_error"));
 
       // 🔥 失敗時清除 pending 狀態
       api.completeAIJob(jobId, false);
@@ -3433,7 +3437,7 @@ if (status !== "COMPLETED" && status !== "FAILED") {
                     typeof err === "string"
                       ? err
                       : (err as { message?: unknown })?.message;
-                  alert(String(msg ?? t("unknown_error")));
+                  showEditorError(String(msg ?? t("unknown_error")));
                 }}
                 selectedTextId={selectedTextId}
                 textProperties={textProperties}

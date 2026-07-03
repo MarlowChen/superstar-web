@@ -1,4 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { extractAuthPayload, extractErrorMessage, getBackendUrl } from "../utils";
+import {
+  getMockUser,
+  isMockAuthEnabled,
+  MOCK_AUTH_TOKEN,
+} from "@/app/lib/mockAuth";
 
 function getCookieOptions(exp?: number) {
   const now = Math.floor(Date.now() / 1000);
@@ -24,8 +30,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (isMockAuthEnabled()) {
+      const result = NextResponse.json({ user: getMockUser(email) });
+      const cookieOptions = getCookieOptions();
+
+      result.cookies.set("payload-token", MOCK_AUTH_TOKEN, cookieOptions);
+      result.cookies.set("auth-token", MOCK_AUTH_TOKEN, cookieOptions);
+
+      return result;
+    }
+
+    const backendUrl = getBackendUrl();
+    if (!backendUrl) {
+      return NextResponse.json(
+        { error: "NEXT_PUBLIC_SERVER_URL is required" },
+        { status: 500 }
+      );
+    }
+
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/password-login`,
+      `${backendUrl}/auth/password-login`,
       {
         method: "POST",
         headers: {
@@ -44,24 +68,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!response.ok || !data?.token || !data?.user) {
+    const authPayload = extractAuthPayload(data);
+
+    if (!response.ok || !authPayload.token || !authPayload.user) {
       return NextResponse.json(
         {
-          error:
-            data?.errors?.[0]?.message ||
-            data?.error ||
-            data?.message ||
-            "Login failed",
+          error: extractErrorMessage(data, "Login failed"),
         },
         { status: response.status || 500 }
       );
     }
 
-    const result = NextResponse.json({ user: data.user });
-    const cookieOptions = getCookieOptions(data.exp);
+    const result = NextResponse.json({ user: authPayload.user });
+    const cookieOptions = getCookieOptions(authPayload.exp);
 
-    result.cookies.set("payload-token", data.token, cookieOptions);
-    result.cookies.set("auth-token", data.token, cookieOptions);
+    result.cookies.set("payload-token", authPayload.token, cookieOptions);
+    result.cookies.set("auth-token", authPayload.token, cookieOptions);
 
     return result;
   } catch (error) {

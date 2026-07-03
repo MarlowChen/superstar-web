@@ -1,11 +1,15 @@
-"use server";
+import ModelsRedirect from "@/app/components/ModelsRedirect";
+import { getPageMetadata } from "@/app/lib/metadata";
+import { Metadata } from "next";
 
-import { redirect } from "next/navigation";
-
-export default async function ModelsPage({
-  params,
-}: {
+type ModelsPageProps = {
   params: { locale: string };
-}) {
-  redirect(`/${params.locale}/drawing`);
+};
+
+export function generateMetadata({ params }: ModelsPageProps): Metadata {
+  return getPageMetadata(params.locale, "models");
+}
+
+export default function ModelsPage({ params }: ModelsPageProps) {
+  return <ModelsRedirect locale={params.locale} />;
 }

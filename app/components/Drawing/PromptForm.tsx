@@ -418,7 +418,7 @@ const normalizeCapabilityModelKey = (value?: string | null): string => {
     return "text:claude-opus-4-6";
   }
 
-  return raw;
+  return withoutPrefix;
 };
 
 const capabilityModelKeys = (
@@ -647,6 +647,57 @@ const areSubmitTypesCompatible = (
   if (!selectedType || !generateType) return true;
   if ((selectedType === "text" && generateType === "chat") || (selectedType === "chat" && generateType === "text")) return true;
   return selectedType === generateType;
+};
+
+const resolveToolSubmitType = (tool: string | null): SubmitType => {
+  const normalized = tool?.trim().toLowerCase();
+  if (!normalized) return null;
+
+  if (
+    normalized === "image" ||
+    normalized === "video" ||
+    normalized === "audio" ||
+    normalized === "text" ||
+    normalized === "chat"
+  ) {
+    return normalized;
+  }
+
+  if (["copy", "content", "script", "writing"].includes(normalized)) {
+    return "text";
+  }
+
+  if (["lipsync", "lip-sync", "lip_sync", "avatar", "talking-avatar"].includes(normalized)) {
+    return "video";
+  }
+
+  return null;
+};
+
+const getDefaultCapabilityModelForType = (
+  response: CapabilityResponse | null,
+  submitType: SubmitType
+): CapabilityModel | null => {
+  if (!response?.media || !submitType) return null;
+
+  const targetType = submitType === "chat" ? "text" : submitType;
+  const candidateModels = response.media
+    .filter((item) => {
+      const itemType = resolveCapabilitySubmitType(item.kind);
+      if (targetType === "text") {
+        return itemType === "text" || itemType === "chat";
+      }
+      return itemType === targetType;
+    })
+    .flatMap((item) => item.models)
+    .slice()
+    .sort((a, b) => {
+      const rankDelta = getCapabilityModelSortRank(a) - getCapabilityModelSortRank(b);
+      if (rankDelta !== 0) return rankDelta;
+      return a.label.localeCompare(b.label, undefined, { numeric: true });
+    });
+
+  return candidateModels[0] || null;
 };
 
 const resolveGenerationKind = (
@@ -1605,8 +1656,9 @@ export default function PromptForm({
   const locale = useLocale();
   const t = useTranslations("drawing");
   const tm = useTranslations("models");
-  const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLDivElement>(null);
+  const submitLatestRef = useRef<(() => void) | null>(null);
+  const submitButtonRef = useRef<HTMLButtonElement>(null);
   const appliedTemplateKeyRef = useRef<string | null>(null);
   const lastParamInitKeyRef = useRef<string | null>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
@@ -1821,9 +1873,20 @@ export default function PromptForm({
     Boolean(selectedCapabilityModel?.inputs?.images) || hasSchemaImageUpload || isBananaImageModel;
   const selectedModelMaxReferenceImages = Math.max(
     0,
-    schemaImageUploadMax ||
-      Number(getCapabilityParam(selectedCapabilityModel, "images")?.max) ||
-      (isBananaImageModel ? BANANA_MAX_REFERENCE_IMAGES : 0)
+    schemaImageUploadMax || 0,
+    Number(
+      getCapabilityParamByKeys(selectedCapabilityModel, [
+        "images",
+        "referenceImages",
+        "referenceImageUrls",
+      ])?.max
+    ) || 0,
+    Number(selectedCapabilityModel?.limits?.maxReferenceImages) || 0,
+    Number(
+      (selectedCapabilityModel as { maxReferenceImages?: number | null } | null)
+        ?.maxReferenceImages
+    ) || 0,
+    isBananaImageModel ? BANANA_MAX_REFERENCE_IMAGES : 0
   );
   const countParam = getCapabilityParam(selectedCapabilityModel, "count");
   const aspectRatioParam =
@@ -1949,6 +2012,60 @@ export default function PromptForm({
         return a.label.localeCompare(b.label, undefined, { numeric: true });
       });
   }, [availableModels]);
+
+  const ensureModelForSubmitType = useCallback(
+    (
+      nextType: SubmitType,
+      options?: { force?: boolean; response?: CapabilityResponse | null }
+    ) => {
+      if (!nextType) {
+        setSelectedModel(null);
+        return;
+      }
+
+      if (
+        !options?.force &&
+        selectedCapabilitySubmitType &&
+        areSubmitTypesCompatible(selectedCapabilitySubmitType, nextType)
+      ) {
+        return;
+      }
+
+      const defaultModel = getDefaultCapabilityModelForType(
+        options?.response ?? capabilityResponse,
+        nextType
+      );
+      setSelectedModel(defaultModel ? (defaultModel as unknown as LoraModel) : null);
+    },
+    [
+      capabilityResponse,
+      selectedCapabilitySubmitType,
+      setSelectedModel,
+    ]
+  );
+
+  const selectSubmitType = useCallback(
+    (nextType: SubmitType, options?: { forceModel?: boolean }) => {
+      setGenerateType(nextType);
+      setShowModelMenu(false);
+      if (!nextType) {
+        setSelectedModel(null);
+        return;
+      }
+      ensureModelForSubmitType(nextType, { force: options?.forceModel });
+    },
+    [ensureModelForSubmitType, setSelectedModel]
+  );
+
+  useEffect(() => {
+    if (!capabilityResponse || !generateType || selectedModel) return;
+    ensureModelForSubmitType(generateType, { force: true });
+  }, [
+    capabilityResponse,
+    ensureModelForSubmitType,
+    generateType,
+    selectedModel,
+  ]);
 
   const getModelCapabilityBadges = useCallback(
     (model: CapabilityModel) => {
@@ -2090,6 +2207,7 @@ export default function PromptForm({
     nextParams.delete("templateCount");
     nextParams.delete("modelId");
     nextParams.delete("selectedImageUrl");
+    nextParams.delete("tool");
 
     if (nextConversationId) {
       nextParams.set("conversationId", nextConversationId);
@@ -2609,6 +2727,7 @@ export default function PromptForm({
   }, [uploadedImages.length, selectedImageForGeneration]);
 
   const modelIdFromQuery = searchParams.get("modelId");
+  const toolFromQuery = searchParams.get("tool");
   useEffect(() => {
     let cancelled = false;
 
@@ -2633,23 +2752,31 @@ export default function PromptForm({
         setCapabilityResponse(data);
         capabilitiesLoadedRef.current = true;
 
-        if (!modelIdFromQuery) return;
+        if (modelIdFromQuery) {
+          const requestedModelKey = normalizeCapabilityModelKey(modelIdFromQuery);
+          const matchedModel = data.media
+            .flatMap((item) => item.models)
+            .find((model) =>
+              capabilityModelKeys(model).some(
+                (key) => key === modelIdFromQuery || key === requestedModelKey
+              )
+            );
 
-        const requestedModelKey = normalizeCapabilityModelKey(modelIdFromQuery);
-        const matchedModel = data.media
-          .flatMap((item) => item.models)
-          .find((model) =>
-            capabilityModelKeys(model).some(
-              (key) => key === modelIdFromQuery || key === requestedModelKey
-            )
-          );
-
-        if (matchedModel) {
-          const nextType = resolveCapabilitySubmitType(matchedModel.kind);
-          if (nextType) {
-            setGenerateType(nextType);
+          if (matchedModel) {
+            const nextType = resolveCapabilitySubmitType(matchedModel.kind);
+            if (nextType) {
+              setGenerateType(nextType);
+            }
+            setSelectedModel(matchedModel as unknown as LoraModel);
+            return;
           }
-          setSelectedModel(matchedModel as unknown as LoraModel);
+        }
+
+        const querySubmitType = resolveToolSubmitType(toolFromQuery);
+        if (querySubmitType) {
+          setGenerateType(querySubmitType);
+          const defaultModel = getDefaultCapabilityModelForType(data, querySubmitType);
+          setSelectedModel(defaultModel ? (defaultModel as unknown as LoraModel) : null);
         }
       } catch (error) {
         if (!cancelled) {
@@ -2663,7 +2790,7 @@ export default function PromptForm({
     return () => {
       cancelled = true;
     };
-  }, [locale, modelIdFromQuery, setSelectedModel]);
+  }, [locale, modelIdFromQuery, setSelectedModel, toolFromQuery]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -2764,10 +2891,14 @@ export default function PromptForm({
     }
     lastParamInitKeyRef.current = initKey;
 
+    const templateAspectRatioValue = initialTemplate?.aspectRatio || "";
     const nextAspectRatioValue =
-      aspectRatioParam?.default === null
-        ? ""
-        : String(aspectRatioParam?.default || aspectRatioOptions[0]?.value || "");
+      templateAspectRatioValue &&
+      aspectRatioOptions.some((option) => option.value === templateAspectRatioValue)
+        ? templateAspectRatioValue
+        : aspectRatioParam?.default === null
+          ? ""
+          : String(aspectRatioParam?.default || aspectRatioOptions[0]?.value || "");
     const nextResolutionValue =
       generateType === "image"
         ? clampImageResolutionValue(
@@ -2777,9 +2908,13 @@ export default function PromptForm({
         : String(resolutionParam?.default || resolutionOptions[0]?.value || "");
     const nextDurationValue =
       String(durationParam?.default || durationOptions[0]?.value || "");
+    const templateImageCount = Number(initialTemplate?.count) || 0;
     const defaultImageCount = Math.max(1, Number(countParam?.default) || 1);
     const nextImageCount = (
-      countOptions.includes(defaultImageCount as (typeof GENERATE_IMAGE_COUNTS)[number])
+      templateImageCount > 0 &&
+      countOptions.includes(templateImageCount as (typeof GENERATE_IMAGE_COUNTS)[number])
+        ? templateImageCount
+        : countOptions.includes(defaultImageCount as (typeof GENERATE_IMAGE_COUNTS)[number])
         ? defaultImageCount
         : countOptions[0] || 1
     ) as (typeof GENERATE_IMAGE_COUNTS)[number];
@@ -2808,6 +2943,8 @@ export default function PromptForm({
     durationOptions,
     durationParam,
     generateType,
+    initialTemplate?.aspectRatio,
+    initialTemplate?.count,
     resolutionOptions,
     resolutionParam,
     selectedCapabilityModel?.id,
@@ -3654,16 +3791,14 @@ export default function PromptForm({
       }>;
 
       const nextPrompt = customEvent.detail?.prompt || "";
+      const hasExplicitType = customEvent.detail?.type !== undefined;
       const nextType =
-        customEvent.detail?.type === undefined ? generateType : customEvent.detail.type;
+        hasExplicitType ? customEvent.detail?.type ?? null : generateType;
 
-      setGenerateType(nextType ?? null);
-      if (
-        nextType &&
-        selectedCapabilitySubmitType &&
-        !areSubmitTypesCompatible(selectedCapabilitySubmitType, nextType)
-      ) {
-        setSelectedModel(null);
+      if (hasExplicitType) {
+        selectSubmitType(nextType ?? null);
+      } else if (nextType) {
+        ensureModelForSubmitType(nextType);
       }
       setPrompt(nextPrompt);
       setFormError(null);
@@ -3694,7 +3829,7 @@ export default function PromptForm({
         handleApplyPromptTemplate as EventListener
       );
     };
-  }, [generateType, selectedCapabilitySubmitType, setSelectedModel]);
+  }, [ensureModelForSubmitType, generateType, selectSubmitType]);
 
   useEffect(() => {
     const templateType = initialTemplate?.type ?? null;
@@ -3728,7 +3863,7 @@ export default function PromptForm({
     }
     appliedTemplateKeyRef.current = templateKey;
 
-    setGenerateType(templateType);
+    selectSubmitType(templateType);
     setFormError(null);
 
     if (templatePrompt) {
@@ -3758,7 +3893,7 @@ export default function PromptForm({
         imageIndex: -1,
       });
     }
-  }, [initialTemplate, setSelectedImageForGeneration]);
+  }, [initialTemplate, selectSubmitType, setSelectedImageForGeneration]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key !== "Enter" || isComposing) {
@@ -3771,15 +3906,7 @@ export default function PromptForm({
     if (!event.shiftKey) {
       event.preventDefault();
       if (!canSubmit) return;
-      if (formRef.current) {
-        if (typeof formRef.current.requestSubmit === "function") {
-          formRef.current.requestSubmit();
-        } else {
-          formRef.current.dispatchEvent(
-            new Event("submit", { bubbles: true, cancelable: true })
-          );
-        }
-      }
+      void handleSubmit();
     }
   };
 
@@ -4486,8 +4613,8 @@ export default function PromptForm({
     };
   }, [images, isReconnectableGroup, selectedConversationId, startTaskStatusPolling, user]);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: Pick<FormEvent, "preventDefault">) => {
+    e?.preventDefault();
 
     const hasSelectedImage = !!selectedImageForGeneration;
     const hasPrompt = !!prompt.trim();
@@ -4969,6 +5096,7 @@ export default function PromptForm({
         body: requestBody,
         createdAt: new Date().toISOString(),
       };
+
       const paramsSummary = isChatMode
         ? undefined
         : buildParamsSummary({
@@ -5531,6 +5659,57 @@ export default function PromptForm({
       submitInFlightRef.current = false;
     }
   };
+  submitLatestRef.current = () => {
+    void handleSubmit();
+  };
+
+  const isPrimarySubmitPress = useCallback((event: MouseEvent | TouchEvent | PointerEvent) => {
+    const target = event.target as HTMLElement | null;
+    if (!target?.closest("[data-submit-trigger]")) return false;
+
+    if ("button" in event && event.button !== 0) {
+      return false;
+    }
+
+    return true;
+  }, []);
+
+  useEffect(() => {
+    const button = submitButtonRef.current;
+    if (!button) return;
+
+    const handleNativeSubmitClick = (event: MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      submitLatestRef.current?.();
+    };
+
+    button.addEventListener("click", handleNativeSubmitClick);
+
+    return () => {
+      button.removeEventListener("click", handleNativeSubmitClick);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleDocumentSubmitPress = (event: MouseEvent | TouchEvent | PointerEvent) => {
+      if (!isPrimarySubmitPress(event)) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      submitLatestRef.current?.();
+    };
+
+    document.addEventListener("mousedown", handleDocumentSubmitPress, true);
+    document.addEventListener("pointerdown", handleDocumentSubmitPress, true);
+    document.addEventListener("touchend", handleDocumentSubmitPress, true);
+
+    return () => {
+      document.removeEventListener("mousedown", handleDocumentSubmitPress, true);
+      document.removeEventListener("pointerdown", handleDocumentSubmitPress, true);
+      document.removeEventListener("touchend", handleDocumentSubmitPress, true);
+    };
+  }, [isPrimarySubmitPress]);
 
   const isStyleTransferMode = !!(
     selectedImageForGeneration ||
@@ -5582,6 +5761,7 @@ export default function PromptForm({
 
   useEffect(() => {
     if (!formError?.missingFields.includes("images")) return;
+    if (formError.reason !== "missing_required_info") return;
     if (!hasSelectedGalleryImage && uploadedImages.length === 0) return;
 
     setFormError((prev) => {
@@ -5844,7 +6024,7 @@ export default function PromptForm({
     }
 
     applyPromptValue(retryGenerationRequest.prompt || "");
-    setGenerateType(
+    selectSubmitType(
       retryGenerationRequest.kind && retryGenerationRequest.kind !== "chat"
         ? retryGenerationRequest.kind
         : "image"
@@ -5863,13 +6043,14 @@ export default function PromptForm({
     onRetryGenerationRequestConsumed?.();
 
     window.setTimeout(() => {
-      formRef.current?.requestSubmit();
+      submitLatestRef.current?.();
     }, 0);
   }, [
     applyPromptValue,
     onRetryGenerationRequestConsumed,
     retryFromSnapshot,
     retryGenerationRequest,
+    selectSubmitType,
     setSelectedImageForGeneration,
   ]);
 
@@ -6502,7 +6683,7 @@ export default function PromptForm({
   return (
     <div className="flex w-full flex-col bg-transparent">
       <div className="mx-auto w-full max-w-3xl px-0 py-0 sm:px-4 lg:px-0">
-        <form ref={formRef} onSubmit={handleSubmit} className="w-full">
+        <div className="w-full">
           <div
             ref={dropZoneRef}
             onDragOver={handleDragOver}
@@ -6871,6 +7052,7 @@ export default function PromptForm({
               <div className="relative min-w-0 flex-1">
                 <div
                   ref={inputRef}
+                  data-testid="drawing-prompt-input"
                   contentEditable={true}
                   onInput={handleInput}
                   onPaste={handlePaste}
@@ -6970,8 +7152,36 @@ export default function PromptForm({
             )}
 
             {/* 下方工具列 */}
-            <div className="mt-3 flex items-center justify-between gap-3 pt-2">
-              <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto whitespace-nowrap no-scrollbar">
+            <div
+              className="mt-3 grid grid-cols-1 gap-3 pt-2 md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
+              onPointerDownCapture={(event) => {
+                if (event.button !== 0) return;
+                const target = event.target as HTMLElement | null;
+                if (!target?.closest("[data-submit-trigger]")) return;
+                event.preventDefault();
+                event.stopPropagation();
+                if (!canSubmit || isGenerating) return;
+                void handleSubmit();
+              }}
+              onMouseDownCapture={(event) => {
+                if (event.button !== 0) return;
+                const target = event.target as HTMLElement | null;
+                if (!target?.closest("[data-submit-trigger]")) return;
+                event.preventDefault();
+                event.stopPropagation();
+                if (!canSubmit || isGenerating) return;
+                void handleSubmit();
+              }}
+              onTouchEndCapture={(event) => {
+                const target = event.target as HTMLElement | null;
+                if (!target?.closest("[data-submit-trigger]")) return;
+                event.preventDefault();
+                event.stopPropagation();
+                if (!canSubmit || isGenerating) return;
+                void handleSubmit();
+              }}
+            >
+              <div className="flex w-full min-w-0 flex-wrap items-center gap-2 overflow-visible md:flex-nowrap md:overflow-x-auto md:overflow-y-hidden md:whitespace-nowrap md:pr-1 no-scrollbar">
                 <div className="relative shrink-0" ref={typeButtonRef}>
                   <button
                     onClick={() => setShowTypeMenu((prev) => !prev)}
@@ -7173,7 +7383,7 @@ export default function PromptForm({
 
                 </div>
 
-                <div className="flex shrink-0 items-center gap-2 md:hidden">
+                <div className="flex min-w-0 flex-wrap items-center gap-2 md:hidden">
                   {canAttachReferenceImages && (
                     <div className="relative shrink-0" ref={mobileStyleTransferButtonRef}>
                       <button
@@ -7314,39 +7524,59 @@ export default function PromptForm({
 	                    );
 	                  })}
 
-	                </div>
+                </div>
               </div>
 
-              <div className="flex shrink-0 items-center justify-end gap-3 self-end md:self-center">
+              <div className="relative z-20 flex shrink-0 items-center justify-end gap-3 self-end md:self-center">
                 <div className="hidden text-[9px] font-bold uppercase tracking-[0.2em] text-[#6d87a2] dark:text-[#6b85a1] lg:block">
                   Enter
                 </div>
                 <button
+                  ref={submitButtonRef}
+                  data-submit-trigger
+                  data-testid="drawing-submit-button"
                   type="button"
-                  onClick={() => {
-                    if (!canSubmit || isGenerating || !formRef.current) return;
-                    if (typeof formRef.current.requestSubmit === "function") {
-                      formRef.current.requestSubmit();
-                    } else {
-                      formRef.current.dispatchEvent(
-                        new Event("submit", { bubbles: true, cancelable: true })
-                      );
-                    }
+                  disabled={!canSubmit || isGenerating}
+                  aria-disabled={!canSubmit || isGenerating}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (!canSubmit || isGenerating) return;
+                    void handleSubmit();
+                  }}
+                  onMouseDown={(event) => {
+                    if (event.button !== 0) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (!canSubmit || isGenerating) return;
+                    void handleSubmit();
+                  }}
+                  onPointerDown={(event) => {
+                    if (event.button !== 0) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (!canSubmit || isGenerating) return;
+                    void handleSubmit();
+                  }}
+                  onTouchEnd={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (!canSubmit || isGenerating) return;
+                    void handleSubmit();
                   }}
                   className={`
                     transition-all duration-200 ease-in-out
-                    inline-flex items-center justify-center
-                    h-10 w-10 rounded-full
+                    select-none
+                    inline-flex items-center justify-center gap-2
+                    h-11 w-full rounded-2xl md:h-10 md:w-10 md:rounded-full
                     focus:outline-none focus:ring-2 focus:ring-[#159cff]/20
-                    disabled:pointer-events-none
                     ${isGenerating
-                            ? "bg-[#17314a] text-white opacity-100 scale-100 translate-y-0 dark:bg-[#17314a]"
-                            : canSubmit
-                              ? "bg-black text-white hover:bg-zinc-800 active:scale-95 opacity-100 scale-100 translate-y-0 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
-                              : "bg-[#dfeaf4] text-[#7e96ad] opacity-100 scale-100 translate-y-0 dark:bg-[#243648] dark:text-[#7f98b1]"
-                          }
+                      ? "bg-[#17314a] text-white opacity-100 scale-100 translate-y-0 dark:bg-[#17314a]"
+                      : canSubmit
+                        ? "cursor-pointer bg-black text-white hover:bg-zinc-800 active:scale-95 opacity-100 scale-100 translate-y-0 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+                        : "cursor-not-allowed bg-[#dfeaf4] text-[#7e96ad] opacity-100 scale-100 translate-y-0 dark:bg-[#243648] dark:text-[#7f98b1]"
+                    }
                   `}
-                  disabled={!canSubmit || isGenerating}
                   aria-label={
                     isGenerating
                       ? t("generating")
@@ -7358,21 +7588,28 @@ export default function PromptForm({
                   {isGenerating ? (
                     <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent"></div>
                   ) : (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      fill="currentColor"
-                      viewBox="0 0 256 256"
-                    >
-                      <path d="M208.49,120.49a12,12,0,0,1-17,0L140,69V216a12,12,0,0,1-24,0V69L64.49,120.49a12,12,0,0,1-17-17l72-72a12,12,0,0,1,17,0l72,72A12,12,0,0,1,208.49,120.49Z"></path>
-                    </svg>
+                    <>
+                      <span className="text-sm font-semibold md:hidden">
+                        {(uploadedImages.length > 0 || selectedImageForGeneration)
+                          ? t("use_style_transfer_generate")
+                          : t("send_message")}
+                      </span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                        viewBox="0 0 256 256"
+                      >
+                        <path d="M208.49,120.49a12,12,0,0,1-17,0L140,69V216a12,12,0,0,1-24,0V69L64.49,120.49a12,12,0,0,1-17-17l72-72a12,12,0,0,1,17,0l72,72A12,12,0,0,1,208.49,120.49Z"></path>
+                      </svg>
+                    </>
                   )}
                 </button>
               </div>
             </div>
           </div>
-        </form>
+        </div>
       </div>
 
       {/* 型別選單 */}
@@ -7405,13 +7642,12 @@ export default function PromptForm({
                     return (
                       <button
                         key={item.id || "auto"}
-                        type="button"
-                        onClick={() => {
-                          setGenerateType(item.id);
-                          setSelectedModel(null);
-                          setShowModelMenu(false);
-                          setShowTypeMenu(false);
-                        }}
+	                        type="button"
+	                        onClick={() => {
+	                          selectSubmitType(item.id, { forceModel: true });
+	                          setShowModelMenu(false);
+	                          setShowTypeMenu(false);
+	                        }}
                         className={`inline-flex items-center justify-between rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
                           isActive
                             ? "bg-[#10243a] text-white dark:bg-[#edf6ff] dark:text-[#10243a]"

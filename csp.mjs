@@ -111,6 +111,7 @@ const policies = {
     "https://cdn2.stablediffusionapi.com",
     "https://www.google-analytics.com",
     "https://analytics.google.com",
+    "https://www.google.com",
     "https://www.googletagmanager.com",
     "https://region1.google-analytics.com",
     "https://graph.facebook.com",

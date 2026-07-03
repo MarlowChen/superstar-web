@@ -1,10 +1,24 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { isMockAuthEnabled, pickUsableAuthToken } from "@/app/lib/mockAuth";
 
 export async function GET() {
-  const token =
-    cookies().get("payload-token")?.value ||
-    cookies().get("auth-token")?.value;
+  if (isMockAuthEnabled()) {
+    return NextResponse.json([
+      {
+        id: "mock-conversation-local",
+        title: "本機測試對話",
+        summary: "用來檢查側邊欄、聊天列表與刪除確認流程",
+        updatedAt: new Date().toISOString(),
+      },
+    ]);
+  }
+
+  const cookieStore = cookies();
+  const token = pickUsableAuthToken(
+    cookieStore.get("payload-token")?.value,
+    cookieStore.get("auth-token")?.value
+  );
 
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

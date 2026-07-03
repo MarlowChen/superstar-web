@@ -15,6 +15,7 @@ import {
   Heart,
   Palette,
   Music4,
+  Play,
 } from "lucide-react";
 
 // LINE 圖示
@@ -51,14 +52,25 @@ const TwitterIcon = ({ size = 16 }: { size?: number }) => (
   />
 );
 
+const isDirectPublicMediaUrl = (url?: string) =>
+  Boolean(
+    url &&
+      (url.startsWith("/images/") ||
+        url.startsWith("blob:") ||
+        url.startsWith("data:"))
+  );
+
 const getAuthenticatedMediaUrl = (shortId?: string, fallbackUrl?: string) => {
+  if (isDirectPublicMediaUrl(fallbackUrl)) return fallbackUrl || "";
   if (!shortId) return fallbackUrl || "";
 
   return `/media/${encodeURIComponent(shortId)}`;
 };
 
 const getMediaFallbackUrl = (shortId?: string, fallbackUrl?: string) =>
-  shortId && fallbackUrl ? fallbackUrl : "";
+  shortId && fallbackUrl && !isDirectPublicMediaUrl(fallbackUrl) ? fallbackUrl : "";
+
+const VIDEO_POSTER_URL = "/images/banner/aierone-Q2-6952788aaa70210e4ef6e37a.jpg";
 
 // 分享按鈕組件
 const ShareButton = React.forwardRef<
@@ -585,19 +597,27 @@ const ModernImageCard = ({
             onClick={onClick}
           >
             {isVideoAsset ? (
-              <video
-                src={mediaUrl}
-                onError={handleMediaLoadError}
-                className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
-                muted
-                playsInline
-                autoPlay
-                loop
-              />
+              <div className="relative h-full w-full bg-[#13202a]">
+                <video
+                  src={mediaUrl}
+                  poster={VIDEO_POSTER_URL}
+                  onError={handleMediaLoadError}
+                  className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                  muted
+                  playsInline
+                  autoPlay
+                  loop
+                />
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-black/35 text-white shadow-lg backdrop-blur-sm sm:h-14 sm:w-14">
+                    <Play className="ml-0.5 h-5 w-5 fill-current sm:h-6 sm:w-6" />
+                  </div>
+                </div>
+              </div>
             ) : isAudioAsset ? (
-              <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-[#eef7fd] via-[#e6f3fc] to-[#dbeefd] px-4 text-center dark:from-[#162430] dark:via-[#1a2a37] dark:to-[#1f3240]">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/75 text-[#466d8d] shadow-sm dark:bg-white/10 dark:text-[#d6efff]">
-                  <Music4 className="h-6 w-6" />
+              <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-[#eef7fd] via-[#e6f3fc] to-[#dbeefd] px-4 pb-14 pt-6 text-center dark:from-[#162430] dark:via-[#1a2a37] dark:to-[#1f3240] sm:gap-3 sm:pb-16">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/75 text-[#466d8d] shadow-sm dark:bg-white/10 dark:text-[#d6efff] sm:h-14 sm:w-14">
+                  <Music4 className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
                 <div className="line-clamp-2 text-xs font-medium text-[#35546e] dark:text-[#e8f6ff]">
                   Audio Result
@@ -605,7 +625,7 @@ const ModernImageCard = ({
                 <audio
                   src={mediaUrl}
                   controls
-                  className="w-full max-w-[220px]"
+                  className="relative z-10 w-full max-w-[200px] sm:max-w-[220px]"
                   onClick={(e) => e.stopPropagation()}
                 />
               </div>
@@ -675,21 +695,21 @@ const ModernImageCard = ({
 
             {/* 底部互動列 */}
             <div className="absolute inset-x-0 bottom-0">
-              <div className="flex items-center justify-center gap-2 bg-black/10 px-3 py-1.5 backdrop-blur-[2px] transition-all duration-200 group-hover:bg-black/18 group-hover:backdrop-blur-[4px]">
-                <div className="flex items-center justify-center gap-2">
+              <div className="grid grid-cols-4 items-center gap-0.5 bg-black/10 px-1 py-1 backdrop-blur-[2px] transition-all duration-200 group-hover:bg-black/18 group-hover:backdrop-blur-[4px] md:flex md:justify-center md:gap-2 md:px-3 md:py-1.5">
+                <div className="contents md:flex md:items-center md:justify-center md:gap-2">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleReaction("like");
                     }}
-                    className={`flex items-center gap-1 rounded-full px-2 py-1 text-[11px] transition-all duration-200 ${image.userReaction?.like
+                    className={`flex min-w-0 items-center justify-center gap-0.5 rounded-full px-1 py-1 text-[10px] transition-all duration-200 md:gap-1 md:px-2 md:text-[11px] ${image.userReaction?.like
                         ? "bg-blue-500/90 text-white"
                         : "bg-white/0 text-white/60 hover:bg-white/8 hover:text-white"
                       }`}
                     title={t("like")}
                   >
-                    <ThumbsUp className={`h-3.5 w-3.5 ${image.userReaction?.like ? "fill-current" : ""}`} />
-                    <span>{image.reactions?.likes || 0}</span>
+                    <ThumbsUp className={`h-3 w-3 shrink-0 md:h-3.5 md:w-3.5 ${image.userReaction?.like ? "fill-current" : ""}`} />
+                    <span className="min-w-0 leading-none">{image.reactions?.likes || 0}</span>
                   </button>
 
                   <button
@@ -697,14 +717,14 @@ const ModernImageCard = ({
                       e.stopPropagation();
                       handleReaction("dislike");
                     }}
-                    className={`flex items-center gap-1 rounded-full px-2 py-1 text-[11px] transition-all duration-200 ${image.userReaction?.dislike
+                    className={`flex min-w-0 items-center justify-center gap-0.5 rounded-full px-1 py-1 text-[10px] transition-all duration-200 md:gap-1 md:px-2 md:text-[11px] ${image.userReaction?.dislike
                         ? "bg-red-500/90 text-white"
                         : "bg-white/0 text-white/60 hover:bg-white/8 hover:text-white"
                       }`}
                     title={t("dislike")}
                   >
-                    <ThumbsDown className={`h-3.5 w-3.5 ${image.userReaction?.dislike ? "fill-current" : ""}`} />
-                    <span>{image.reactions?.dislikes || 0}</span>
+                    <ThumbsDown className={`h-3 w-3 shrink-0 md:h-3.5 md:w-3.5 ${image.userReaction?.dislike ? "fill-current" : ""}`} />
+                    <span className="min-w-0 leading-none">{image.reactions?.dislikes || 0}</span>
                   </button>
 
                   <button
@@ -712,24 +732,25 @@ const ModernImageCard = ({
                       e.stopPropagation();
                       handleCollectReaction();
                     }}
-                    className={`flex items-center gap-1 rounded-full px-2 py-1 text-[11px] transition-all duration-200 ${image.userReaction?.collecting
+                    className={`flex min-w-0 items-center justify-center gap-0.5 rounded-full px-1 py-1 text-[10px] transition-all duration-200 md:gap-1 md:px-2 md:text-[11px] ${image.userReaction?.collecting
                         ? "bg-pink-500/90 text-white"
                         : "bg-white/0 text-white/60 hover:bg-white/8 hover:text-white"
                       }`}
                     title={t("collect")}
                   >
-                    <Heart className={`h-3.5 w-3.5 ${image.userReaction?.collecting ? "fill-current" : ""}`} />
-                    <span>{image.reactions?.collections || 0}</span>
+                    <Heart className={`h-3 w-3 shrink-0 md:h-3.5 md:w-3.5 ${image.userReaction?.collecting ? "fill-current" : ""}`} />
+                    <span className="min-w-0 leading-none">{image.reactions?.collections || 0}</span>
                   </button>
                 </div>
 
-                <div className="flex items-center gap-2 md:hidden">
+                <div className="flex min-w-0 items-center justify-center md:hidden">
                   <ShareButton
                     ref={mobileShareButtonRef}
                     onClick={toggleShareDropdown}
                     isActive={isShareDropdownOpen || isShared}
                     isMobile={true}
                     title={t("share_image")}
+                    className="w-full px-1"
                   />
                 </div>
               </div>

@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import {
+  getMockCollectedImages,
+  isMockAuthEnabled,
+  pickUsableAuthToken,
+} from "@/app/lib/mockAuth";
 
 type RouteContext = {
   params: {
@@ -8,9 +13,19 @@ type RouteContext = {
 };
 
 export async function GET(req: NextRequest, context: RouteContext) {
-  const token =
-    cookies().get("payload-token")?.value ||
-    cookies().get("auth-token")?.value;
+  if (isMockAuthEnabled()) {
+    const [, pageSegment, limitSegment] = context.params.path;
+    const page = Number(pageSegment) || 1;
+    const limit = Number(limitSegment) || 20;
+
+    return NextResponse.json(getMockCollectedImages(page, limit));
+  }
+
+  const cookieStore = cookies();
+  const token = pickUsableAuthToken(
+    cookieStore.get("payload-token")?.value,
+    cookieStore.get("auth-token")?.value
+  );
 
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

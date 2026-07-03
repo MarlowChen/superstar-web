@@ -1,4 +1,5 @@
 const getRedirects = async () => {
+  const debugRedirects = process.env.NEXT_PUBLIC_DEBUG_REDIRECTS === 'true';
   const internetExplorerRedirect = {
     source: '/:path((?!ie-incompatible.html$).*)',
     has: [
@@ -13,11 +14,19 @@ const getRedirects = async () => {
   };
 
   try {
+    if (!process.env.NEXT_PUBLIC_SERVER_URL) {
+      return [internetExplorerRedirect];
+    }
+
     const redirectsRes = await fetch(
       `${process.env.NEXT_PUBLIC_SERVER_URL}/api/redirects?limit=1000&depth=1`,
     );
 
     if (!redirectsRes.ok) {
+      if (redirectsRes.status === 404) {
+        return [internetExplorerRedirect];
+      }
+
       throw new Error(`Redirects API responded with ${redirectsRes.status}`);
     }
 
@@ -74,7 +83,7 @@ const getRedirects = async () => {
 
     return [internetExplorerRedirect, ...dynamicRedirects];
   } catch (error) {
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === 'production' && debugRedirects) {
       console.warn(`Dynamic redirects unavailable: ${error}`);
     }
 

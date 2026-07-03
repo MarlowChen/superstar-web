@@ -34,9 +34,24 @@ const LOCKED_MODEL_IDS: string[] = [
 
 const HEAVY_BLUR = "blur-[3px] md:blur-[3px]";
 const CDN_BASE_URL = "https://psf.nyc3.cdn.digitaloceanspaces.com/covers/yours";
+const USE_REMOTE_CDN_GALLERY = process.env.NODE_ENV === "production";
+const LOCAL_PREVIEW_IMAGES = [
+  "/images/heros/demo/character1.png",
+  "/images/heros/demo/character2.png",
+  "/images/heros/demo/character3.png",
+  "/images/heros/demo/character4.png",
+  "/images/heros/demo/character5.png",
+  "/images/heros/demo/character6.png",
+  "/images/heros/demo/scene1.png",
+  "/images/heros/demo/scene2.png",
+  "/images/heros/demo/material1.png",
+  "/images/heros/demo/material2.png",
+  "/images/heros/demo/fight1.png",
+  "/images/heros/demo/fight2.png",
+];
 
 const ModelGalleryTabs: React.FC = () => {
-  const t = useTranslations("psfyours");
+  const t = useTranslations("aieroneyours");
   const tModelview = useTranslations("modelview");
   const { userPoint } = useAuth();
 
@@ -89,17 +104,19 @@ const ModelGalleryTabs: React.FC = () => {
   // --- 生成圖片 URL 的函數 ---
   const generateImageUrls = (config: ModelConfig): ModelImage[] => {
     if (!config.cdnFolder || config.imageCount === 0) return [];
-    
-    const images: ModelImage[] = [];
-    for (let i = 1; i <= config.imageCount; i++) {
-      const paddedNum = i.toString().padStart(5, '0'); // 00001, 00002, ...
-      images.push({
-        id: `${config.imagePrefix}-${paddedNum}`,
-        url: `${CDN_BASE_URL}/${config.cdnFolder}/${config.imagePrefix}${paddedNum}.png`,
-        prompt: `${config.displayName} - Image ${i}` // 可以自定義或留空
-      });
-    }
-    return images;
+
+    const urls = USE_REMOTE_CDN_GALLERY
+      ? Array.from({ length: config.imageCount }, (_, index) => {
+          const paddedNum = (index + 1).toString().padStart(5, "0");
+          return `${CDN_BASE_URL}/${config.cdnFolder}/${config.imagePrefix}${paddedNum}.png`;
+        })
+      : LOCAL_PREVIEW_IMAGES;
+
+    return urls.map((url, index) => ({
+      id: `${config.imagePrefix || "preview"}-${index + 1}`,
+      url,
+      prompt: `${config.displayName} - Image ${index + 1}`,
+    }));
   };
 
   // --- 分頁列捲動控制 ---
@@ -365,6 +382,7 @@ const ModelGalleryTabs: React.FC = () => {
                     src={image.url}
                     alt={image.prompt || "AI generated image"}
                     fill
+                    priority={index < 4}
                     className={`object-cover transition-transform duration-300 ${
                       locked
                         ? `${HEAVY_BLUR} brightness-90 saturate-50 scale-105`

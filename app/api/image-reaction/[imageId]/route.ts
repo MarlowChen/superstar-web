@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { pickUsableAuthToken } from "@/app/lib/mockAuth";
 
 type RouteContext = {
   params: {
@@ -8,9 +9,11 @@ type RouteContext = {
 };
 
 export async function POST(req: NextRequest, context: RouteContext) {
-  const token =
-    cookies().get("payload-token")?.value ||
-    cookies().get("auth-token")?.value;
+  const cookieStore = cookies();
+  const token = pickUsableAuthToken(
+    cookieStore.get("payload-token")?.value,
+    cookieStore.get("auth-token")?.value
+  );
 
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

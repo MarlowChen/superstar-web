@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import {
+  createMockGenerationSubmission,
+  isMockAuthEnabled,
+  pickUsableAuthToken,
+} from "@/app/lib/mockAuth";
 
 type RouteContext = {
   params: {
@@ -8,9 +13,21 @@ type RouteContext = {
 };
 
 export async function POST(req: NextRequest, context: RouteContext) {
-  const token =
-    cookies().get("payload-token")?.value ||
-    cookies().get("auth-token")?.value;
+  if (isMockAuthEnabled()) {
+    const body = await req.json().catch(() => ({}));
+
+    return NextResponse.json(
+      createMockGenerationSubmission(
+        body && typeof body === "object" ? (body as Record<string, unknown>) : {}
+      )
+    );
+  }
+
+  const cookieStore = cookies();
+  const token = pickUsableAuthToken(
+    cookieStore.get("payload-token")?.value,
+    cookieStore.get("auth-token")?.value
+  );
 
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

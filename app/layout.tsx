@@ -5,6 +5,8 @@ import { getLocale, getMessages } from 'next-intl/server';
 import { ThemeProvider } from "./components/ThemeProvider";
 import { getTheme } from "./actions/theme";
 import "./globals.css";
+import "./components/Homepage/landing-home.css";
+import "./components/Login/login.css";
 import Script from "next/script";
 
 export default async function RootLayout({
@@ -21,7 +23,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} className={isDark ? "dark" : undefined} suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/images/logo-small.svg" type="image/svg+xml" />
         <link rel="alternate icon" href="/favicon.ico" sizes="32x32" />
         <meta property="fb:app_id" content="571449555549847" />
         <Script id="theme-init" strategy="beforeInteractive">{`
@@ -50,7 +52,11 @@ export default async function RootLayout({
           })();
         `}</Script>
       </head>
-      <body className={isDark ? "dark" : undefined} style={{ backgroundColor: isDark ? "#09111B" : "#F2F7FC", color: isDark ? "#E7F1FB" : "#10243A" }}>
+      <body
+        className={isDark ? "dark" : undefined}
+        style={{ backgroundColor: isDark ? "#09111B" : "#F2F7FC", color: isDark ? "#E7F1FB" : "#10243A" }}
+        suppressHydrationWarning
+      >
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider initialTheme={initialTheme}>{children}</ThemeProvider>
         </NextIntlClientProvider>

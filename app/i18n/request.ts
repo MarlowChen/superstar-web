@@ -3,6 +3,8 @@ import {getRequestConfig} from 'next-intl/server';
 import fs from 'fs';
 import path from 'path';
 
+const debugI18n = process.env.NEXT_PUBLIC_DEBUG_I18N === 'true';
+
 export default getRequestConfig(async ({requestLocale}) => {
   const requestedLocale = await requestLocale;
   
@@ -23,21 +25,27 @@ export default getRequestConfig(async ({requestLocale}) => {
     }
   }
   
-  console.log('🌍 Locale Debug:', {
-    requestedLocale,
-    resolvedLocale: locale,
-    supportedLocales
-  });
+  if (debugI18n) {
+    console.info('Locale resolved', {
+      requestedLocale,
+      resolvedLocale: locale,
+      supportedLocales
+    });
+  }
   
   try {
     const messages: Record<string, unknown> = {};
     const localeDir = path.join(process.cwd(), 'public', 'locales', locale);
     
-    console.log('📁 Looking for locale dir:', localeDir);
+    if (debugI18n) {
+      console.info('Looking for locale dir', { localeDir });
+    }
     
     if (fs.existsSync(localeDir)) {
       const files = fs.readdirSync(localeDir);
-      console.log('📄 Found files:', files);
+      if (debugI18n) {
+        console.info('Locale files found', { locale, files });
+      }
       
       for (const file of files) {
         if (file.endsWith('.json')) {
@@ -68,7 +76,9 @@ export default getRequestConfig(async ({requestLocale}) => {
             messages[namespace] = JSON.parse(content);
           }
         }
-        console.log('🔄 Fallback to English messages loaded');
+        if (debugI18n) {
+          console.info('Fallback to English messages loaded');
+        }
       }
     }
     
