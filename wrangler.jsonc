@@ -1,0 +1,34 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": ".open-next/worker.js",
+  "name": "aierone-web",
+  "workers_dev": true,
+  "compatibility_date": "2026-07-04",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "aierone-web"
+    }
+  ],
+  "images": {
+    "binding": "IMAGES"
+  },
+  "vars": {
+    "NEXT_PUBLIC_SERVER_URL": "https://api.superstar-ai.xyz",
+    "NEXT_PUBLIC_URL": "https://aierone-web.superstar-ai.workers.dev",
+    "NEXT_PUBLIC_IS_MOCK": "false",
+    "NEXT_PUBLIC_TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
+    "NEXT_PUBLIC_DEBUG_MIDDLEWARE": "false",
+    "NEXT_PUBLIC_DEBUG_I18N": "false",
+    "NEXT_PUBLIC_DEBUG_REDIRECTS": "false",
+    "NEXT_PUBLIC_DEBUG_AUTH": "false"
+  }
+}

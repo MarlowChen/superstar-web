@@ -52,6 +52,7 @@ const policies = {
     "https://aierone.nyc3.digitaloceanspaces.com",
     "https://*.r2.dev",
     "https://cdn2.stablediffusionapi.com",
+    "https://openrouter.ai",
     "https://www.google-analytics.com",
     "https://www.googletagmanager.com",
     "https://static.xx.fbcdn.net",
@@ -74,6 +75,7 @@ const policies = {
     "https://aierone.nyc3.digitaloceanspaces.com",
     "https://*.r2.dev",
     "https://cdn2.stablediffusionapi.com",
+    "https://openrouter.ai",
   ],
   "font-src": [
     "'self'",
@@ -109,6 +111,7 @@ const policies = {
     "https://aierone.nyc3.digitaloceanspaces.com",
     "https://*.r2.dev",
     "https://cdn2.stablediffusionapi.com",
+    "https://openrouter.ai",
     "https://www.google-analytics.com",
     "https://analytics.google.com",
     "https://www.google.com",

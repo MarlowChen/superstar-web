@@ -11,6 +11,7 @@
 
 # next.js
 /.next/
+/.open-next/
 /out/
 
 # production
@@ -40,6 +41,7 @@ env.yaml
 
 # vercel
 .vercel
+.wrangler/
 
 # typescript
 *.tsbuildinfo
