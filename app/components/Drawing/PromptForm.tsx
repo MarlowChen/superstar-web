@@ -259,6 +259,46 @@ const normalizeMediaUrl = (url?: string) => {
   return url.startsWith("/media/") ? url : url;
 };
 
+const REFERENCE_DEBUG_LOG_PREFIX = "[drawing-reference-debug]";
+
+const createReferenceDebugTraceId = (uuid: string) =>
+  `ref-${uuid.slice(-8)}-${Date.now().toString(36)}`;
+
+const summarizeReferenceDebugUrl = (url: string, index: number) => {
+  try {
+    const parsed = new URL(
+      url,
+      typeof window === "undefined" ? "https://local.invalid" : window.location.origin
+    );
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    return {
+      index,
+      host: parsed.host,
+      tail: parts.slice(-2).join("/"),
+    };
+  } catch {
+    const cleanUrl = url.split("?")[0];
+    const parts = cleanUrl.split("/").filter(Boolean);
+    return {
+      index,
+      host: url.startsWith("data:") ? "data-url" : "relative-or-opaque",
+      tail: parts.slice(-2).join("/").slice(-96),
+    };
+  }
+};
+
+const logDrawingReferenceDebug = (
+  stage: string,
+  payload: Record<string, unknown>
+) => {
+  if (typeof window === "undefined") return;
+
+  console.info(REFERENCE_DEBUG_LOG_PREFIX, {
+    stage,
+    ...payload,
+  });
+};
+
 const isTaskDiscardPayload = (payload: unknown): boolean => {
   if (!payload || typeof payload !== "object") {
     return false;
@@ -2068,9 +2108,7 @@ export default function PromptForm({
   );
   const effectiveMaxReferenceImages =
     isImageFaceSwapMode
-      ? selectedImageForGeneration
-        ? 1
-        : 2
+      ? 2
       : isVideoFaceSwapMode
         ? 1
       : isManualImageMode
@@ -3905,14 +3943,6 @@ export default function PromptForm({
   }, [uploadedImages.length, !!selectedImageForGeneration]);
 
   useEffect(() => {
-    if (selectedImageForGeneration && uploadedImages.length > 0) {
-      setUploadedImages([]);
-      setShowModelWarning(false);
-      showToast(t("toast.switched_to_gallery_image") || "已切換為圖庫圖片，已移除上傳圖片");
-    }
-  }, [selectedImageForGeneration, uploadedImages.length, t]);
-
-  useEffect(() => {
     if (generateType === "image" || generateType === "audio") {
       if (audioUrl) {
         setAudioUrl("");
@@ -3926,6 +3956,14 @@ export default function PromptForm({
   }, [audioUrl, generateType, motionVideoUrl]);
 
   const hasSelectedGalleryImage = Boolean(selectedImageForGeneration);
+  const uploadedReferenceCapacity = Math.max(
+    0,
+    effectiveMaxReferenceImages - (selectedImageForGeneration ? 1 : 0)
+  );
+  const remainingUploadReferenceSlots = Math.max(
+    0,
+    uploadedReferenceCapacity - uploadedImages.length
+  );
 
   useEffect(() => {
     if (generateType !== "video") return;
@@ -4948,7 +4986,6 @@ export default function PromptForm({
   const handleSubmit = async (e?: Pick<FormEvent, "preventDefault">) => {
     e?.preventDefault();
 
-    const hasSelectedImage = !!selectedImageForGeneration;
     const hasPrompt = !!prompt.trim();
 
     if (!hasPrompt) {
@@ -5079,15 +5116,31 @@ export default function PromptForm({
         .map((image) => image.url)
         .filter((url): url is string => Boolean(url));
       const selectedImageUrl = selectedImageForGeneration?.url || "";
-      const requestImages =
-        isImageFaceSwapMode || isVideoFaceSwapMode
+      const requestImages = [
+        ...(selectedImageUrl ? [selectedImageUrl] : []),
+        ...uploadedImageUrls,
+      ].filter((url, index, urls) => Boolean(url) && urls.indexOf(url) === index);
+      const requestReferenceImages = ([
+        ...(selectedImageForGeneration
           ? [
-              ...(selectedImageUrl ? [selectedImageUrl] : []),
-              ...uploadedImageUrls,
+              {
+                name:
+                  selectedImageForGeneration.publishedImageId ||
+                  "selected-image",
+                url: selectedImageUrl,
+              },
             ]
-          : hasSelectedImage
-            ? [selectedImageForGeneration.url].filter(Boolean)
-            : uploadedImageUrls;
+          : []),
+        ...uploadedImages.map((image) => ({
+          file: image.file,
+          name: image.name,
+          url: image.url,
+        })),
+      ] as { file?: File; name: string; url?: string }[]).filter((image) =>
+        Boolean(image.url || image.file)
+      );
+      const referenceDebugTraceId = createReferenceDebugTraceId(id);
+      const referenceDebugImages = requestImages.map(summarizeReferenceDebugUrl);
       const shouldUsePiapiFaceSwap = isImageFaceSwapMode || isVideoFaceSwapMode;
       const capabilityParams = selectedCapabilityModel?.params || [];
       const getParamValue = (param: CapabilityParam): unknown => {
@@ -5149,6 +5202,9 @@ export default function PromptForm({
           timestamp: new Date().toISOString(),
           status: TaskStatus.PROMPT_DELIVERING,
           progressPercent: shouldUseIntentRouter ? 18 : isModelTextMode ? 45 : 32,
+          images: requestReferenceImages.length > 0
+            ? requestReferenceImages
+            : undefined,
           currentLabel: initialChatLabel,
           progressTrail: [
             {
@@ -5180,12 +5236,8 @@ export default function PromptForm({
           loraModel: resolveGenerationKind(effectiveGenerateType),
           timestamp: new Date().toISOString(),
           status: TaskStatus.PROMPT_DELIVERING,
-          images: uploadedImages.length > 0
-            ? uploadedImages.map((image) => ({
-                file: image.file,
-                name: image.name,
-                url: image.url,
-              }))
+          images: requestReferenceImages.length > 0
+            ? requestReferenceImages
             : undefined,
         });
         taskExpectedCountRef.current[tempGenerationGroupId] = pendingCount;
@@ -5442,17 +5494,20 @@ export default function PromptForm({
           ...(effectiveGenerateType
             ? effectiveGenerateType === "chat"
               ? requestImages.length > 0
-                ? { images: requestImages }
+                ? { images: requestImages, referenceImageUrls: requestImages }
                 : {}
               : isModelTextMode
                 ? requestImages.length > 0
-                  ? { images: requestImages }
+                  ? { images: requestImages, referenceImageUrls: requestImages }
                   : {}
               : shouldUseIntentRouter
-                ? { images: requestImages }
+                ? requestImages.length > 0
+                  ? { images: requestImages, referenceImageUrls: requestImages }
+                  : {}
                 : {}
             : {
                 images: requestImages,
+                referenceImageUrls: requestImages,
               }),
         };
       }
@@ -5477,6 +5532,26 @@ export default function PromptForm({
             body: requestBody,
             referenceCount: requestImages.length,
           });
+
+      logDrawingReferenceDebug("submit:before-fetch", {
+        traceId: referenceDebugTraceId,
+        uuid: id,
+        endpoint,
+        method: submitMethod,
+        mode: effectiveGenerateType || "auto",
+        isChatMode,
+        modelId: selectedModelRequestId,
+        modelLabel: selectedCapabilityModel?.label,
+        referenceImageCount: requestImages.length,
+        referenceImages: referenceDebugImages,
+        bodyKeys: Object.keys(requestBody).sort(),
+        bodyImagesCount: Array.isArray(requestBody.images)
+          ? requestBody.images.length
+          : 0,
+        bodyReferenceImageUrlsCount: Array.isArray(requestBody.referenceImageUrls)
+          ? requestBody.referenceImageUrls.length
+          : 0,
+      });
 
       const applyChatCreateProgress = (event: GenerationProgressPayload) => {
         if (!isChatMode) return;
@@ -5522,6 +5597,9 @@ export default function PromptForm({
                 : "Processing"),
           progressPercent: nextProgress,
           progressTrail: appendProgressTrail(existingGroup?.progressTrail, event),
+          images: existingGroup?.images || (
+            requestReferenceImages.length > 0 ? requestReferenceImages : undefined
+          ),
         });
       };
 
@@ -5631,6 +5709,8 @@ export default function PromptForm({
           headers: {
             "Content-Type": "application/json",
             Accept: isChatMode ? "text/event-stream" : "application/json",
+            "X-Reference-Debug-Id": referenceDebugTraceId,
+            "X-Reference-Image-Count": String(requestImages.length),
           },
           credentials: "include",
           body: JSON.stringify(submitBody),
@@ -5645,6 +5725,15 @@ export default function PromptForm({
       let responseStatus = res.status;
       const isStreamResponse =
         res.headers.get("content-type")?.includes("text/event-stream") || false;
+
+      logDrawingReferenceDebug("submit:response-received", {
+        traceId: referenceDebugTraceId,
+        uuid: id,
+        endpoint,
+        status: res.status,
+        isStreamResponse,
+        referenceImageCount: requestImages.length,
+      });
 
       if (isStreamResponse) {
         const streamedResponse = await readStreamedChatCreateResponse(res);
@@ -5834,6 +5923,9 @@ export default function PromptForm({
           loraModel: "chat",
           timestamp: new Date().toISOString(),
           status: TaskStatus.PROMPT_DELIVERING,
+          images: requestReferenceImages.length > 0
+            ? requestReferenceImages
+            : undefined,
         });
 
         if (resolvedConversationId) {
@@ -5928,12 +6020,8 @@ export default function PromptForm({
                 : "Generating video. This usually takes 1 to 5 minutes."
             : undefined,
         requestSnapshot,
-        images: uploadedImages.length > 0
-          ? uploadedImages.map((image) => ({
-              file: image.file,
-              name: image.name,
-              url: image.url,
-            }))
+        images: requestReferenceImages.length > 0
+          ? requestReferenceImages
           : undefined,
       };
 
@@ -6092,7 +6180,7 @@ export default function PromptForm({
       return;
     }
 
-    setUploadedImages((prev) => prev.slice(0, effectiveMaxReferenceImages));
+    setUploadedImages((prev) => prev.slice(0, uploadedReferenceCapacity));
   }, [
     effectiveMaxReferenceImages,
     generateType,
@@ -6100,6 +6188,7 @@ export default function PromptForm({
     selectedImageForGeneration,
     setSelectedImageForGeneration,
     uploadedImages.length,
+    uploadedReferenceCapacity,
   ]);
 
   useEffect(() => {
@@ -6458,12 +6547,6 @@ export default function PromptForm({
       return;
     }
 
-    if (selectedImageForGeneration) {
-      setSelectedImageForGeneration(null);
-      setShowSelectedImageModelWarning(false);
-      showToast(t("toast.switched_to_uploaded_image") || "已切換為上傳圖片，已取消已選擇圖片");
-    }
-
     const imageFiles = Array.from(e.dataTransfer.files).filter((file) =>
       file.type.startsWith("image/")
     );
@@ -6475,7 +6558,7 @@ export default function PromptForm({
 
     const filesToUpload = imageFiles.slice(
       0,
-      Math.max(0, effectiveMaxReferenceImages - uploadedImages.length)
+      remainingUploadReferenceSlots
     );
     if (filesToUpload.length === 0) {
       showToast(
@@ -6497,7 +6580,7 @@ export default function PromptForm({
 
     if (result.success && result.images.length > 0) {
       setUploadedImages((prev) =>
-        [...prev, ...result.images].slice(0, effectiveMaxReferenceImages)
+        [...prev, ...result.images].slice(0, uploadedReferenceCapacity)
       );
 
       if (prompt.trim() === "") {
@@ -6515,15 +6598,9 @@ export default function PromptForm({
       file.type.startsWith("image/")
     );
     if (imageFiles.length > 0) {
-      if (selectedImageForGeneration) {
-        setSelectedImageForGeneration(null);
-        setShowSelectedImageModelWarning(false);
-        showToast(t("toast.switched_to_uploaded_image") || "已切換為上傳圖片，已取消已選擇圖片");
-      }
-
       const filesToUpload = imageFiles.slice(
         0,
-        Math.max(0, effectiveMaxReferenceImages - uploadedImages.length)
+        remainingUploadReferenceSlots
       );
       if (filesToUpload.length === 0) {
         showToast(
@@ -6546,7 +6623,7 @@ export default function PromptForm({
 
       if (result.success && result.images.length > 0) {
         setUploadedImages((prev) =>
-          [...prev, ...result.images].slice(0, effectiveMaxReferenceImages)
+          [...prev, ...result.images].slice(0, uploadedReferenceCapacity)
         );
 
         if (prompt.trim() === "") {
@@ -7000,9 +7077,8 @@ export default function PromptForm({
         return;
       }
       {
-        const remainingSlots = Math.max(0, effectiveMaxReferenceImages - uploadedImages.length);
-        if (remainingSlots > 0) {
-          const filesToUpload = imageFiles.slice(0, remainingSlots);
+        if (remainingUploadReferenceSlots > 0) {
+          const filesToUpload = imageFiles.slice(0, remainingUploadReferenceSlots);
           showPendingReferencePreviews(filesToUpload);
           setPendingReferenceCount(filesToUpload.length);
           setIsUploadingReferences(true);
@@ -7013,7 +7089,7 @@ export default function PromptForm({
           
           if (result.success && result.images.length > 0) {
             setUploadedImages((prev) =>
-              [...prev, ...result.images].slice(0, effectiveMaxReferenceImages)
+              [...prev, ...result.images].slice(0, uploadedReferenceCapacity)
             );
             if (prompt.trim() === "") {
               showToast(t("toast.image_uploaded_style_transfer"), false);
@@ -7103,7 +7179,7 @@ export default function PromptForm({
                       </div>
                     )}
                     <div className="no-scrollbar flex max-w-full items-center gap-2 overflow-x-auto overflow-y-hidden whitespace-nowrap pr-1">
-                      {selectedImageForGeneration ? (
+                      {selectedImageForGeneration && (
                         <div
                           className={`relative h-20 w-20 overflow-hidden rounded-xl border shadow-sm ${showSelectedImageModelWarning
                               ? "border-yellow-500 bg-yellow-900/20"
@@ -7164,8 +7240,8 @@ export default function PromptForm({
                                     : "Main"}
                           </div>
                         </div>
-                      ) : (
-                        previewUrls.map((preview, index) => (
+                      )}
+                      {previewUrls.map((preview, index) => (
                           <div
                             key={`${preview.name}-${index}`}
                             draggable
@@ -7243,8 +7319,7 @@ export default function PromptForm({
                               </div>
                             )}
                           </div>
-                        ))
-                      )}
+                      ))}
                       {(pendingReferencePreviews.length > 0
                         ? pendingReferencePreviews
                         : Array.from({ length: pendingReferenceCount }).map((_, index) => ({

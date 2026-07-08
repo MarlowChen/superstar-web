@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { isMockAuthEnabled, pickUsableAuthToken } from "@/app/lib/mockAuth";
+import {
+  getReferenceDebugTraceId,
+  logReferenceDebug,
+  summarizeReferenceDebugBody,
+} from "@/app/api/_utils/referenceDebug";
 
 export async function POST(req: NextRequest) {
+  const traceId = getReferenceDebugTraceId(req);
+
   if (isMockAuthEnabled()) {
     const body = await req.json().catch(() => ({}));
     const message =
@@ -76,6 +83,18 @@ export async function POST(req: NextRequest) {
   targetUrl.search = req.nextUrl.search;
 
   let response: Response;
+  const bodyText = await req.text();
+  logReferenceDebug(
+    "api/chat/create",
+    traceId,
+    summarizeReferenceDebugBody(bodyText),
+    {
+      targetHost: targetUrl.host,
+      headerReferenceImageCount: req.headers.get("x-reference-image-count"),
+      acceptsStream: (req.headers.get("accept") || "").includes("text/event-stream"),
+    }
+  );
+
   try {
     response = await fetch(targetUrl, {
       method: "POST",
@@ -84,8 +103,10 @@ export async function POST(req: NextRequest) {
         Cookie: `payload-token=${token}; auth-token=${token}`,
         "Content-Type": req.headers.get("content-type") || "application/json",
         Accept: req.headers.get("accept") || "application/json",
+        "X-Reference-Debug-Id": traceId,
+        "X-Reference-Image-Count": req.headers.get("x-reference-image-count") || "",
       },
-      body: await req.text(),
+      body: bodyText,
       cache: "no-store",
     });
   } catch (error) {

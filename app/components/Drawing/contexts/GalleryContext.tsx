@@ -272,6 +272,18 @@ const mergeProgressTrail = (
   return mergedTrail;
 };
 
+const pickMoreCompleteReferenceImages = (
+  existingImages: ImageDataGroup["images"],
+  incomingImages: ImageDataGroup["images"]
+): ImageDataGroup["images"] => {
+  const existingCount = existingImages?.length || 0;
+  const incomingCount = incomingImages?.length || 0;
+
+  if (incomingCount > existingCount) return incomingImages;
+  if (existingCount > 0) return existingImages;
+  return incomingImages;
+};
+
 export const mergeImageGroup = (
   existingGroup: ImageDataGroup,
   incomingGroup: ImageDataGroup
@@ -355,10 +367,7 @@ export const mergeImageGroup = (
         : existingGroup.activeResultIndex,
     progressTrail: mergeProgressTrail(existingGroup.progressTrail, incomingGroup.progressTrail),
     requestSnapshot: incomingGroup.requestSnapshot || existingGroup.requestSnapshot,
-    images:
-      (incomingGroup.images && incomingGroup.images.length > 0)
-        ? incomingGroup.images
-        : existingGroup.images,
+    images: pickMoreCompleteReferenceImages(existingGroup.images, incomingGroup.images),
     expectedCount: mergedExpectedCount || undefined,
     resultCount: mergedResultCount,
   };
@@ -766,10 +775,7 @@ export function GalleryProvider({
                 ? preferredGroup.publishedImages
                 : staleGroup.publishedImages,
             requestSnapshot: preferredGroup.requestSnapshot || staleGroup.requestSnapshot,
-            images:
-              (preferredGroup.images && preferredGroup.images.length > 0)
-                ? preferredGroup.images
-                : staleGroup.images,
+            images: pickMoreCompleteReferenceImages(staleGroup.images, preferredGroup.images),
             status: preferredGroup.status || staleGroup.status,
           };
           newImages.splice(staleIndex, 1);

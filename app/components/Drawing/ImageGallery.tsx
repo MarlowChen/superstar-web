@@ -1592,13 +1592,16 @@ export default function ImageGallery({
                             </div>
 
                             {group.images && group.images?.length > 0 && (
-                              <div className="shrink-0">
-                                <OriginalImageDisplay
-                                  originalImage={group.images[0]}
-                                  onImageClick={() =>
-                                    handleOriginalImageClick(group.images![0])
-                                  }
-                                />
+                              <div className="flex max-w-[152px] shrink-0 flex-wrap justify-end gap-2">
+                                {group.images.map((originalImage, originalImageIndex) => (
+                                  <OriginalImageDisplay
+                                    key={`${originalImage.url || originalImage.name || "reference"}-${originalImageIndex}`}
+                                    originalImage={originalImage}
+                                    onImageClick={() =>
+                                      handleOriginalImageClick(originalImage)
+                                    }
+                                  />
+                                ))}
                               </div>
                             )}
                           </div>
