@@ -1488,12 +1488,32 @@ export default function ImageGallery({
                       <div className="flex min-w-0 w-full flex-col items-start">
                         {isChatGroup(group) ? (
                           <div className="w-full max-w-[720px] px-1 py-1 sm:px-0">
-                            <p className="whitespace-pre-wrap text-sm leading-7 text-[#20384d] dark:text-[#eef7ff]">
-                              <ChatTypingText
-                                text={group.assistantMessage || ""}
-                                isStreaming={!isGenerationDone(group)}
-                              />
-                            </p>
+                            {group.assistantMessage ? (
+                              <p className="whitespace-pre-wrap text-sm leading-7 text-[#20384d] dark:text-[#eef7ff]">
+                                <ChatTypingText
+                                  text={group.assistantMessage || ""}
+                                  isStreaming={!isGenerationDone(group)}
+                                />
+                              </p>
+                            ) : !isGenerationDone(group) ? (
+                              <div className="inline-flex max-w-full flex-col rounded-2xl border border-[#cfe3f3] bg-[#f4faff] px-4 py-3 text-sm leading-6 text-[#416b8e] shadow-[0_10px_24px_rgba(49,89,122,0.08)] dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-[#b8dfff]">
+                                <span className="inline-flex items-center gap-2 font-semibold text-[#20384d] dark:text-[#eef7ff]">
+                                  <span className="h-2 w-2 animate-pulse rounded-full bg-[#37bdf8]" />
+                                  {getGenerationStageLabel(group)}
+                                </span>
+                                <span className="mt-1 text-xs text-[#6b88a1] dark:text-[#9bb4c8]">
+                                  {getGenerationStageDetail(group)}
+                                </span>
+                                {typeof group.progressPercent === "number" ? (
+                                  <span className="mt-2 h-1 overflow-hidden rounded-full bg-[#dbeaf5] dark:bg-white/[0.08]">
+                                    <span
+                                      className="block h-full rounded-full bg-[#37bdf8] transition-all duration-300"
+                                      style={{ width: `${Math.max(6, Math.min(100, Math.round(group.progressPercent)))}%` }}
+                                    />
+                                  </span>
+                                ) : null}
+                              </div>
+                            ) : null}
                             {group.status === TaskStatus.FAILED && !group.assistantMessage ? (
                               <p className="text-sm leading-6 text-red-500 dark:text-red-300">
                                 {group.failureMessage || "回覆失敗，請重新送出"}

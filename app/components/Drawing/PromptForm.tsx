@@ -132,8 +132,10 @@ type TaskDiscardPayload = {
   terminalAction?: string;
   failureCode?: string;
   failureMessage?: string;
-  message?: string;
-  error?: string;
+  message?: unknown;
+  error?: unknown;
+  detail?: unknown;
+  raw_message?: unknown;
   failure?: {
     code?: string;
     message?: string;
@@ -271,13 +273,58 @@ const isTaskDiscardPayload = (payload: unknown): boolean => {
   );
 };
 
+const isProbablyOpaqueErrorToken = (value: string) => {
+  const trimmed = value.trim();
+  return (
+    !trimmed ||
+    trimmed === "[object Object]" ||
+    /^[a-f0-9]{16,}$/i.test(trimmed) ||
+    /^6a[a-f0-9]{20,}$/i.test(trimmed)
+  );
+};
+
+const extractReadableErrorText = (value: unknown): string => {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return isProbablyOpaqueErrorToken(trimmed) ? "" : trimmed;
+  }
+
+  if (!value || typeof value !== "object") return "";
+
+  const record = value as Record<string, unknown>;
+  const preferredKeys = [
+    "failureMessage",
+    "errorMessage",
+    "message",
+    "detail",
+    "raw_message",
+    "rawMessage",
+    "reason",
+    "error",
+  ];
+
+  for (const key of preferredKeys) {
+    const text = extractReadableErrorText(record[key]);
+    if (text) return text;
+  }
+
+  return "";
+};
+
 const getTaskFailureMessage = (payload: unknown) => {
   if (!payload || typeof payload !== "object") {
     return "";
   }
 
   const task = payload as TaskDiscardPayload;
-  return task.failureMessage || task.failure?.message || task.message || task.error || "";
+  return (
+    extractReadableErrorText(task.failureMessage) ||
+    extractReadableErrorText(task.failure?.message) ||
+    extractReadableErrorText(task.message) ||
+    extractReadableErrorText(task.detail) ||
+    extractReadableErrorText(task.raw_message) ||
+    extractReadableErrorText(task.error)
+  );
 };
 
 const appendProgressTrail = (
@@ -708,6 +755,7 @@ type ChatCreateResponse = {
   conversationId?: string;
   userMessageId?: string;
   assistantMessageId?: string;
+  streaming?: boolean;
   message?: string | {
     role?: string;
     content?: string;
@@ -716,8 +764,9 @@ type ChatCreateResponse = {
   missingFields?: string[];
   choices?: string[];
   reason?: GenerationFormError["reason"];
-  error?: string;
-  detail?: string;
+  error?: unknown;
+  detail?: unknown;
+  removeMessageIds?: string[];
 };
 
 const normalizeChatCreateResponse = (payload: unknown): ChatCreateResponse | null => {
@@ -737,6 +786,12 @@ const normalizeChatCreateResponse = (payload: unknown): ChatCreateResponse | nul
     value && typeof value === "object" ? (value as Record<string, unknown>) : null;
   const asString = (value: unknown): string | undefined =>
     typeof value === "string" && value.trim().length > 0 ? value : undefined;
+  const asStringArray = (value: unknown): string[] =>
+    Array.isArray(value)
+      ? value
+          .map((item) => asString(item))
+          .filter((item): item is string => Boolean(item))
+      : [];
 
   const taskFromNested =
     nested.task && typeof nested.task === "object"
@@ -876,6 +931,10 @@ const normalizeChatCreateResponse = (payload: unknown): ChatCreateResponse | nul
       asString(nestedData?.status) ||
       asString(assistantMessage?.status) ||
       asString(userMessage?.status),
+    removeMessageIds:
+      asStringArray(nested.removeMessageIds).length > 0
+        ? asStringArray(nested.removeMessageIds)
+        : asStringArray(nestedData?.removeMessageIds),
   };
 
   return normalized;
@@ -897,8 +956,8 @@ const getResponseMessageText = (
 
 const getBackendErrorText = (data: ChatCreateResponse | null | undefined) =>
   getResponseMessageText(data?.message) ||
-  data?.detail ||
-  data?.error ||
+  extractReadableErrorText(data?.detail) ||
+  extractReadableErrorText(data?.error) ||
   "";
 
 const getSubmitExceptionMessage = (error: unknown, locale: string) => {
@@ -1008,6 +1067,33 @@ const getHistoryTaskConversationId = (
     readHistoryString(conversationRecord?.id) ||
     readHistoryString(conversationRecord?._id)
   );
+};
+
+const resolveHistoryTaskKind = (
+  task: NonNullable<ChatHistoryMessage["task"]>
+): "image" | "video" | "audio" | "text" | "chat" => {
+  const settings = readTaskSettings(task);
+  const raw = String(
+    task.kind ||
+      task.type ||
+      settings.mediaType ||
+      settings.kind ||
+      settings.type ||
+      settings.medium ||
+      ""
+  ).toLowerCase();
+
+  if (raw.includes("video")) return "video";
+  if (
+    raw.includes("audio") ||
+    raw.includes("music") ||
+    raw.includes("voice") ||
+    raw.includes("sound")
+  ) {
+    return "audio";
+  }
+  if (raw.includes("text") || raw.includes("chat")) return "text";
+  return "image";
 };
 
 const isHistoryMessageLike = (value: unknown): value is ChatHistoryMessage => {
@@ -2144,6 +2230,62 @@ export default function PromptForm({
       let pendingGroup: ImageDataGroup | null = null;
       let skipNextAssistantGeneration = false;
 
+      const resolveContentType = (content: unknown) =>
+        content && typeof content === "object"
+          ? String((content as Record<string, unknown>).type || "").toLowerCase()
+          : "";
+
+      const isFailedGenerationAssistantMessage = (
+        message: ChatHistoryMessage,
+        contentType: string,
+        text: string
+      ) => {
+        if (resolveHistoryRole(message) !== "assistant") return false;
+        const content =
+          message.content && typeof message.content === "object"
+            ? (message.content as Record<string, unknown>)
+            : {};
+        const status = String(
+          (message as { status?: unknown }).status || content.status || ""
+        ).toLowerCase();
+        const intent = String(content.intent || "").toLowerCase();
+        const error = content.error;
+        const lowerText = text.toLowerCase();
+
+        return (
+          contentType === "assistant_text" &&
+          (status === "failed" || intent === "generation_failed" || Boolean(error)) &&
+          (intent === "generation_failed" ||
+            Boolean(error) ||
+            lowerText.includes("generation did not complete") ||
+            lowerText.includes("image generation did not complete") ||
+            lowerText.includes("video generation did not complete") ||
+            lowerText.includes("modelslab image request failed"))
+        );
+      };
+
+      const hasFollowingFailedGenerationAssistant = (fromIndex: number) => {
+        for (let i = fromIndex + 1; i < messages.length; i += 1) {
+          const nextMessage = messages[i];
+          const nextRole = resolveHistoryRole(nextMessage);
+          if (nextRole === "user") return false;
+          if (nextRole !== "assistant") continue;
+          const nextText = readHistoryText(nextMessage.content);
+          const nextContentType = resolveContentType(nextMessage.content);
+          return isFailedGenerationAssistantMessage(nextMessage, nextContentType, nextText);
+        }
+        return false;
+      };
+
+      const hasFollowingAssistant = (fromIndex: number) => {
+        for (let i = fromIndex + 1; i < messages.length; i += 1) {
+          const nextRole = resolveHistoryRole(messages[i]);
+          if (nextRole === "assistant") return true;
+          if (nextRole === "user") return false;
+        }
+        return false;
+      };
+
       const mapContentImages = (content: unknown) => {
         if (!Array.isArray(content)) return [];
 
@@ -2194,12 +2336,7 @@ export default function PromptForm({
         const role = resolveHistoryRole(message);
         const text = readHistoryText(message.content);
         const contentImages = mapContentImages(message.content);
-        const contentType =
-          message.content && typeof message.content === "object"
-            ? String(
-                (message.content as Record<string, unknown>).type || ""
-              ).toLowerCase()
-            : "";
+        const contentType = resolveContentType(message.content);
         const timestamp =
           message.updatedAt ||
           message.createdAt ||
@@ -2209,6 +2346,16 @@ export default function PromptForm({
           if (message.task && isEmptyFailedTask(message.task)) {
             pendingGroup = null;
             skipNextAssistantGeneration = true;
+            return;
+          }
+          if (!message.task && hasFollowingFailedGenerationAssistant(index)) {
+            pendingGroup = null;
+            skipNextAssistantGeneration = true;
+            return;
+          }
+          if (!message.task && !hasFollowingAssistant(index)) {
+            pendingGroup = null;
+            skipNextAssistantGeneration = false;
             return;
           }
           skipNextAssistantGeneration = false;
@@ -2228,6 +2375,7 @@ export default function PromptForm({
           const referenceImages = message.task
             ? extractTaskReferenceImages(message.task)
             : [];
+          const taskKind = message.task ? resolveHistoryTaskKind(message.task) : "chat";
 
           pendingGroup = {
             id: taskId || `history-${message.id || index}`,
@@ -2239,8 +2387,8 @@ export default function PromptForm({
             responseType: isGeneration ? "generation" : "chat",
             conversationId: taskConversationId || conversationId,
             userMessageId: message.id,
-            kind: isGeneration ? "image" : "chat",
-            loraModel: isGeneration ? "image" : "chat",
+            kind: isGeneration ? taskKind : "chat",
+            loraModel: isGeneration ? taskKind : "chat",
             timestamp: message.task?.updatedAt || timestamp,
             status: isGeneration
               ? normalizeGenerationStatus(
@@ -2257,6 +2405,26 @@ export default function PromptForm({
         if (role === "assistant") {
           if (skipNextAssistantGeneration) {
             skipNextAssistantGeneration = false;
+            pendingGroup = null;
+            return;
+          }
+
+          if (isFailedGenerationAssistantMessage(message, contentType, text)) {
+            if (pendingGroup) {
+              const pendingId = pendingGroup.id;
+              const pendingUserMessageId = pendingGroup.userMessageId;
+              for (let i = groups.length - 1; i >= 0; i -= 1) {
+                const candidate = groups[i];
+                if (
+                  candidate &&
+                  (candidate.id === pendingId ||
+                    (pendingUserMessageId && candidate.userMessageId === pendingUserMessageId))
+                ) {
+                  groups.splice(i, 1);
+                  break;
+                }
+              }
+            }
             pendingGroup = null;
             return;
           }
@@ -2352,6 +2520,21 @@ export default function PromptForm({
     [readHistoryText]
   );
 
+
+  const removeGroupsByMessageIds = useCallback(
+    (messageIds?: string[]) => {
+      const ids = new Set((messageIds || []).filter(Boolean));
+      if (ids.size === 0) return;
+      setImages(
+        imagesRef.current.filter(
+          (group) =>
+            !ids.has(group.userMessageId || "") &&
+            !ids.has(group.assistantMessageId || "")
+        )
+      );
+    },
+    [setImages]
+  );
 
   const mergeConversationGroupsWithLocalState = useCallback(
     (historyGroups: ImageDataGroup[], targetConversationId: string) => {
@@ -3464,6 +3647,40 @@ export default function PromptForm({
     [updateChatBubble]
   );
 
+  const appendChatDeltaMessage = useCallback(
+    ({
+      groupId,
+      conversationId,
+      fallbackPrompt,
+      deltaText,
+      assistantMessageId,
+    }: {
+      groupId: string;
+      conversationId: string;
+      fallbackPrompt: string;
+      deltaText: string;
+      assistantMessageId?: string;
+    }) => {
+      if (!deltaText) return;
+
+      if (chatRevealTimerRef.current) {
+        clearInterval(chatRevealTimerRef.current);
+        chatRevealTimerRef.current = null;
+      }
+
+      const nextText = `${chatDraftsRef.current[groupId] || ""}${deltaText}`;
+      updateChatBubble({
+        groupId,
+        conversationId,
+        fallbackPrompt,
+        assistantMessage: nextText,
+        assistantMessageId,
+        status: TaskStatus.PROMPT_DELIVERING,
+      });
+    },
+    [updateChatBubble]
+  );
+
   useEffect(() => {
     return () => {
       cleanupSSE();
@@ -3839,6 +4056,7 @@ export default function PromptForm({
         messageId?: string;
         fullText?: string;
         deltaText?: string;
+        status?: string;
       } => {
         if (!payload || typeof payload !== "object") return {};
         const data = payload as Record<string, unknown>;
@@ -3884,17 +4102,32 @@ export default function PromptForm({
           messageId:
             typeof directMessage?.id === "string"
               ? directMessage.id
-              : typeof data.id === "string"
+              : typeof directMessage?._id === "string"
+                ? directMessage._id
+              : typeof data.messageId === "string"
+                ? data.messageId
+              : typeof data.assistantMessageId === "string"
+                ? data.assistantMessageId
+              : typeof data.id === "string" && !/^\d+-\d+$/.test(data.id)
                 ? data.id
                 : undefined,
           fullText,
           deltaText,
+          status:
+            typeof directMessage?.status === "string"
+              ? directMessage.status
+              : typeof data.status === "string"
+                ? data.status
+                : undefined,
         };
       };
 
       const createChatStreamUrl = () => {
         const url = new URL("/api/chat-sse/stream", window.location.origin);
         url.searchParams.set("conversationId", conversationId);
+        if (assistantMessageId) {
+          url.searchParams.set("assistantMessageId", assistantMessageId);
+        }
         const lastChatEventId = chatLastEventIdsRef.current[conversationId];
         if (lastChatEventId) {
           url.searchParams.set("after", lastChatEventId);
@@ -3924,7 +4157,23 @@ export default function PromptForm({
             }
 
             const payload = JSON.parse(e.data);
+            const eventType = typeof payload?.type === "string" ? payload.type : "";
+            const removeMessageIds = Array.isArray(payload?.removeMessageIds)
+              ? payload.removeMessageIds.filter((id: unknown): id is string => typeof id === "string" && id.trim().length > 0)
+              : [];
+            if (eventType === "message.branch_replaced" || removeMessageIds.length > 0) {
+              removeGroupsByMessageIds(removeMessageIds);
+              return;
+            }
+
             const parsed = parseChatPayload(payload);
+            console.log("[PromptForm][chat-sse:event]", {
+              eventType,
+              messageId: parsed.messageId,
+              deltaLength: parsed.deltaText?.length || 0,
+              fullTextLength: parsed.fullText?.length || 0,
+              receivedAt: new Date().toISOString(),
+            });
 
             if (parsed.role && parsed.role !== "assistant") {
               return;
@@ -3934,15 +4183,29 @@ export default function PromptForm({
               return;
             }
 
-            if (parsed.deltaText) {
-              revealChatMessage({
+            if (parsed.messageId && !parsed.fullText && !parsed.deltaText) {
+              const nextStatus =
+                parsed.status?.toLowerCase() === "failed"
+                  ? TaskStatus.FAILED
+                  : TaskStatus.PROMPT_DELIVERING;
+              updateChatBubble({
                 groupId,
                 conversationId,
                 fallbackPrompt,
-                targetText: parsed.deltaText,
+                assistantMessage: chatDraftsRef.current[groupId] || "",
                 assistantMessageId: parsed.messageId || assistantMessageId,
-                completeOnFinish: false,
-                append: true,
+                status: nextStatus,
+              });
+              return;
+            }
+
+            if (parsed.deltaText) {
+              appendChatDeltaMessage({
+                groupId,
+                conversationId,
+                fallbackPrompt,
+                deltaText: parsed.deltaText,
+                assistantMessageId: parsed.messageId || assistantMessageId,
               });
               return;
             }
@@ -4003,12 +4266,58 @@ export default function PromptForm({
           }
         };
 
+        const handleErrorEvent = (e: Event) => {
+          try {
+            if (!("data" in e) || typeof (e as MessageEvent).data !== "string") {
+              return;
+            }
+
+            const messageEvent = e as MessageEvent;
+            if (messageEvent.lastEventId) {
+              chatLastEventIdsRef.current[conversationId] = messageEvent.lastEventId;
+            }
+
+            const payload = JSON.parse(messageEvent.data || "{}") as ChatCreateResponse & {
+              message?: string;
+              detail?: string;
+            };
+            const message =
+              payload.message ||
+              payload.detail ||
+              getBackendErrorText(payload) ||
+              (locale === "zh-TW"
+                ? "回覆失敗，請重新送出"
+                : locale === "ja"
+                  ? "返信に失敗しました。もう一度送信してください"
+                  : "Reply failed. Please try again.");
+
+            removeGroupsByMessageIds(payload.removeMessageIds);
+            removeImage(groupId);
+            showToast(message, true);
+            setFormError({
+              message,
+              missingFields: [],
+              choices: [],
+              reason: "unsupported_request",
+            });
+            setIsGenerating(false);
+            activeChatStreamRef.current = {
+              conversationId: null,
+              groupId: null,
+              fallbackPrompt: "",
+              assistantMessageId: undefined,
+            };
+          } catch (error) {
+            console.error("Error parsing chat error SSE payload:", error);
+          }
+        };
+
           es.addEventListener("open", () => {
             reconnectAttempt = 0;
           });
           es.addEventListener("message", handleEvent);
-          es.onmessage = handleEvent;
           es.addEventListener("progress", handleProgressEvent);
+          es.addEventListener("error", handleErrorEvent);
           es.addEventListener("summary", () => {});
           es.onerror = () => {
             if (chatEventSourceRef.current !== es) return;
@@ -4032,7 +4341,17 @@ export default function PromptForm({
 
       connectChatSSE();
     },
-    [cleanupChatSSE, locale, revealChatMessage, updateImage]
+    [
+      appendChatDeltaMessage,
+      cleanupChatSSE,
+      locale,
+      removeGroupsByMessageIds,
+      removeImage,
+      revealChatMessage,
+      setIsGenerating,
+      updateChatBubble,
+      updateImage,
+    ]
   );
 
   const setupUserSSE = useCallback(
@@ -4559,9 +4878,66 @@ export default function PromptForm({
       const isExplicitChatMode = effectiveGenerateType === "chat";
       const isModelTextMode = effectiveGenerateType === "text";
       const isChatMode = isNaturalChatMode || isExplicitChatMode || isModelTextMode;
+      const initialChatLabel = shouldUseIntentRouter
+        ? locale === "zh-TW"
+          ? "正在讀取上下文與理解需求"
+          : locale === "ja"
+            ? "文脈を読み取り、意図を理解しています"
+            : "Reading context and understanding intent"
+        : isModelTextMode
+          ? locale === "zh-TW"
+            ? "正在交給文字模型產生回覆"
+            : locale === "ja"
+              ? "テキストモデルに返信を生成させています"
+              : "Sending to the text model"
+          : locale === "zh-TW"
+            ? "正在準備回覆"
+            : locale === "ja"
+              ? "返信を準備しています"
+              : "Preparing reply";
+      const initialChatDetail = shouldUseIntentRouter
+        ? locale === "zh-TW"
+          ? "正在整理最近對話、參考圖與目前選擇的模型設定。"
+          : locale === "ja"
+            ? "最近の会話、参照画像、選択中のモデル設定を整理しています。"
+            : "Collecting recent messages, references, and selected model settings."
+        : isModelTextMode
+          ? locale === "zh-TW"
+            ? "已送出到後端，模型回覆完成後會直接出現在這裡。"
+            : locale === "ja"
+              ? "バックエンドへ送信済みです。モデルの返信が完了するとここに表示されます。"
+              : "Submitted to the backend. The reply will appear here when ready."
+          : locale === "zh-TW"
+            ? "已送出到後端，正在建立回覆節點。"
+            : locale === "ja"
+              ? "バックエンドへ送信済みです。返信ノードを作成しています。"
+              : "Submitted to the backend and creating the reply node.";
       const activeConversationId = freshConversationKey
         ? null
         : conversationIdRef.current || selectedConversationId;
+      const resetToFreshOnSubmitFailure = !activeConversationId;
+      const discardSubmitPlaceholders = () => {
+        removeImage(tempChatGroupId);
+        removeImage(tempGenerationGroupId);
+        delete taskExpectedCountRef.current[tempChatGroupId];
+        delete taskExpectedCountRef.current[tempGenerationGroupId];
+        window.dispatchEvent(new CustomEvent("drawing:submit-settled"));
+
+        if (resetToFreshOnSubmitFailure) {
+          historyRequestSeqRef.current += 1;
+          conversationIdRef.current = null;
+          historyLoadedRef.current = true;
+          skipNextHistoryLoadRef.current = null;
+          setImages([]);
+          syncConversationUrl(null);
+        }
+      };
+
+      // First-turn UX: keep the optimistic user/pending card from being cleared
+      // while /create is still waiting for the real conversation id.
+      if (!activeConversationId) {
+        historyLoadedRef.current = true;
+      }
       const uploadedImageUrls = uploadedImages
         .map((image) => image.url)
         .filter((url): url is string => Boolean(url));
@@ -4635,35 +5011,21 @@ export default function PromptForm({
             : "chat",
           timestamp: new Date().toISOString(),
           status: TaskStatus.PROMPT_DELIVERING,
-          progressPercent: shouldUseIntentRouter ? 18 : undefined,
-          currentLabel: shouldUseIntentRouter
-            ? locale === "zh-TW"
-              ? "正在讀取上下文與理解需求"
-              : locale === "ja"
-                ? "文脈を読み取り、意図を理解しています"
-                : "Reading context and understanding intent"
-            : undefined,
-          progressTrail: shouldUseIntentRouter
-            ? [
-                {
-                  phase: "context_loading",
-                  label:
-                    locale === "zh-TW"
-                      ? "讀取對話上下文"
-                      : locale === "ja"
-                        ? "会話の文脈を読み取り"
-                        : "Reading conversation context",
-                  detail:
-                    locale === "zh-TW"
-                      ? "正在整理最近對話、參考圖與目前選擇的模型設定。"
-                      : locale === "ja"
-                        ? "最近の会話、参照画像、選択中のモデル設定を整理しています。"
-                        : "Collecting recent messages, references, and selected model settings.",
-                  timestamp: new Date().toISOString(),
-                  progressPercent: 18,
-                },
-              ]
-            : undefined,
+          progressPercent: shouldUseIntentRouter ? 18 : isModelTextMode ? 45 : 32,
+          currentLabel: initialChatLabel,
+          progressTrail: [
+            {
+              phase: shouldUseIntentRouter
+                ? "context_loading"
+                : isModelTextMode
+                  ? "reply_model"
+                  : "conversation_ready",
+              label: initialChatLabel,
+              detail: initialChatDetail,
+              timestamp: new Date().toISOString(),
+              progressPercent: shouldUseIntentRouter ? 18 : isModelTextMode ? 45 : 32,
+            },
+          ],
         });
       } else {
         const pendingCount = resolveGenerationOutputCount(effectiveGenerateType, imageCount);
@@ -5173,14 +5535,9 @@ export default function PromptForm({
 
       if (!responseOk) {
         const backendErrorText = getBackendErrorText(effectiveErrorData);
+        discardSubmitPlaceholders();
 
         if (isInsufficientPointsResponse(responseStatus, effectiveErrorData)) {
-          if (isNaturalChatMode) {
-            removeImage(tempChatGroupId);
-          } else {
-            removeImage(tempGenerationGroupId);
-          }
-
           const message =
             backendErrorText ||
             t("error_messages.insufficient_points");
@@ -5199,62 +5556,37 @@ export default function PromptForm({
         }
 
         if (isChatMode) {
-          removeImage(tempGenerationGroupId);
-          delete taskExpectedCountRef.current[tempGenerationGroupId];
-
           const chatConversationId =
             effectiveErrorData?.conversationId ||
             activeConversationId ||
             conversationIdRef.current ||
             "";
-          const rawChatText = backendErrorText || t("error_messages.generation_failed");
-          const lowerChatText = rawChatText.toLowerCase();
-          const looksInternal =
-            lowerChatText.includes("conversation summary") ||
-            lowerChatText.includes("need to confirm if user wants") ||
-            lowerChatText.includes("final medium (image or video)");
           const chatText =
-            !rawChatText.trim() || looksInternal
-              ? locale.startsWith("zh")
-                ? "我在，想聊天或創作都可以。"
-                : locale.startsWith("ja")
-                  ? "います。話したいことや作りたいものをそのまま入力してください。"
-                  : "I'm here. Tell me what you want to chat about or create."
-              : rawChatText;
+            backendErrorText ||
+            (locale.startsWith("zh")
+              ? "回覆失敗，請重新送出。"
+              : locale.startsWith("ja")
+                ? "返信に失敗しました。もう一度送信してください。"
+                : "Reply failed. Please try again.");
 
-          updateImage(tempChatGroupId, {
-            id: tempChatGroupId,
-            publishedImages: [],
-            prompt: trimmedPrompt,
-            assistantMessage: "",
-            responseType: "chat",
-            conversationId: chatConversationId || undefined,
-            userMessageId: effectiveErrorData?.userMessageId,
-            assistantMessageId: effectiveErrorData?.assistantMessageId,
-            kind: "chat",
-            loraModel: "chat",
-            timestamp: new Date().toISOString(),
-            status: TaskStatus.PROMPT_DELIVERING,
+          removeGroupsByMessageIds(effectiveErrorData?.removeMessageIds);
+          removeImage(tempChatGroupId);
+          if (chatConversationId) {
+            conversationIdRef.current = chatConversationId;
+            syncConversationUrl(chatConversationId);
+          }
+          setFormError({
+            message: chatText,
+            missingFields: [],
+            choices: [],
+            reason: "unsupported_request",
           });
-
-          revealChatMessage({
-            groupId: tempChatGroupId,
-            conversationId: chatConversationId,
-            fallbackPrompt: trimmedPrompt,
-            targetText: chatText,
-            assistantMessageId: effectiveErrorData?.assistantMessageId,
-            completeOnFinish: true,
-          });
+          showToast(chatText, true);
           setIsGenerating(false);
-          resetComposer();
           return;
         }
 
-        if (isNaturalChatMode) {
-          removeImage(tempChatGroupId);
-        } else {
-          removeImage(tempGenerationGroupId);
-        }
+        removeGroupsByMessageIds(effectiveErrorData?.removeMessageIds);
 
         if (responseStatus === 422 && effectiveErrorData?.ok === false) {
           setFormError({
@@ -5321,8 +5653,12 @@ export default function PromptForm({
         }
       }
 
-      const assistantText =
-        getResponseMessageText(data?.message);
+      const isStreamingChat =
+        data?.streaming === true ||
+        String(data?.status || "").toLowerCase() === "streaming";
+      const assistantText = isStreamingChat
+        ? ""
+        : getResponseMessageText(data?.message);
 
       if (data?.type === "chat") {
         const chatGroupId = tempChatGroupId;
@@ -5367,7 +5703,7 @@ export default function PromptForm({
         }
 
         chatDraftsRef.current[chatGroupId] = "";
-        if (assistantText) {
+        if (assistantText && !isStreamingChat) {
           revealChatMessage({
             groupId: chatGroupId,
             conversationId: resolvedConversationId || "",
@@ -5418,6 +5754,7 @@ export default function PromptForm({
       }
 
       const responseData = data!;
+      window.dispatchEvent(new CustomEvent("drawing:submit-settled"));
       const taskId = responseData.taskId!;
       const pendingCount = resolveGenerationOutputCount(
         (responseData.kind || effectiveGenerateType) as GenerateType,
@@ -5502,10 +5839,17 @@ export default function PromptForm({
 
       resetComposer();
     } catch (err) {
-      if (effectiveGenerateType === null && uuidRef.current) {
+      window.dispatchEvent(new CustomEvent("drawing:submit-settled"));
+      if (uuidRef.current) {
         removeImage(`chat-${uuidRef.current}`);
-      } else if (uuidRef.current) {
         removeImage(`pending-${uuidRef.current}`);
+      }
+      if (!selectedConversationId && !conversationIdRef.current) {
+        historyRequestSeqRef.current += 1;
+        historyLoadedRef.current = true;
+        skipNextHistoryLoadRef.current = null;
+        setImages([]);
+        syncConversationUrl(null);
       }
       console.error("Task submission error:", {
         error: err,
@@ -5654,6 +5998,7 @@ export default function PromptForm({
       submitInFlightRef.current = true;
       setIsGenerating(true);
       setFormError(null);
+      removeImage(group.id);
 
       const nextUuid = ObjectID().toHexString();
       const retryBody: Record<string, unknown> = {
