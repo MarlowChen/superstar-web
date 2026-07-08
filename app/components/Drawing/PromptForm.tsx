@@ -3998,6 +3998,19 @@ export default function PromptForm({
     }
   }, []);
 
+  const resetComposerAttachments = useCallback(() => {
+    setUploadedImages([]);
+    setAudioUrl("");
+    setAudioFileName("");
+    setMotionVideoUrl("");
+    setMotionVideoFileName("");
+    setSelectedImageForGeneration(null);
+    setShowModelWarning(false);
+    setShowSelectedImageModelWarning(false);
+    setPendingReferenceCount(0);
+    clearPendingReferencePreviews();
+  }, [clearPendingReferencePreviews, setSelectedImageForGeneration]);
+
   useEffect(() => {
     const handleApplyPromptTemplate = (
       event: Event
@@ -5055,7 +5068,6 @@ export default function PromptForm({
           conversationIdRef.current = null;
           historyLoadedRef.current = true;
           skipNextHistoryLoadRef.current = null;
-          setImages([]);
           syncConversationUrl(null);
         }
       };
@@ -5851,6 +5863,7 @@ export default function PromptForm({
 
         setIsGenerating(false);
         resetComposer();
+        resetComposerAttachments();
         return;
       }
 
@@ -5964,6 +5977,7 @@ export default function PromptForm({
       });
 
       resetComposer();
+      resetComposerAttachments();
     } catch (err) {
       window.dispatchEvent(new CustomEvent("drawing:submit-settled"));
       if (uuidRef.current) {
@@ -5974,7 +5988,6 @@ export default function PromptForm({
         historyRequestSeqRef.current += 1;
         historyLoadedRef.current = true;
         skipNextHistoryLoadRef.current = null;
-        setImages([]);
         syncConversationUrl(null);
       }
       console.error("Task submission error:", {
