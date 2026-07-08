@@ -52,7 +52,7 @@ const normalizeMockGenerationCount = (
 };
 
 export function createMockGenerationSubmission(body: Record<string, unknown>) {
-  const kind = normalizeMockGenerationKind(body.type || body.kind);
+  const kind = normalizeMockGenerationKind(body.forcedType || body.type || body.kind);
   const count = normalizeMockGenerationCount(body.count, kind);
   const uuid =
     typeof body.uuid === "string" && body.uuid.trim()
@@ -372,7 +372,7 @@ const aspectRatioOptions = [
 export const MOCK_MODEL_CAPABILITIES = {
   version: "local-mock",
   submission: {
-    endpoint: "/generate/create",
+    endpoint: "/chat/create",
     method: "POST",
     fields: {},
     note: "Local UI QA only. Mock mode does not generate media.",
@@ -438,7 +438,7 @@ export const MOCK_MODEL_CAPABILITIES = {
             },
           ],
           submit: {
-            endpoint: "/generate/create",
+            endpoint: "/chat/create",
             method: "POST",
             type: "image",
             modelId: "mock-image-studio",
@@ -497,7 +497,7 @@ export const MOCK_MODEL_CAPABILITIES = {
             },
           ],
           submit: {
-            endpoint: "/generate/create",
+            endpoint: "/chat/create",
             method: "POST",
             type: "video",
             modelId: "mock-video-studio",
@@ -535,7 +535,7 @@ export const MOCK_MODEL_CAPABILITIES = {
             },
           ],
           submit: {
-            endpoint: "/generate/create",
+            endpoint: "/chat/create",
             method: "POST",
             type: "audio",
             modelId: "mock-voice-studio",

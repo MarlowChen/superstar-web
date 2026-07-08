@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { isMockAuthEnabled, pickUsableAuthToken } from "@/app/lib/mockAuth";
+import {
+  createMockGenerationSubmission,
+  isMockAuthEnabled,
+  pickUsableAuthToken,
+} from "@/app/lib/mockAuth";
 import {
   getReferenceDebugTraceId,
   logReferenceDebug,
@@ -12,21 +16,29 @@ export async function POST(req: NextRequest) {
 
   if (isMockAuthEnabled()) {
     const body = await req.json().catch(() => ({}));
-    const message =
-      body && typeof body === "object" && typeof body.message === "string"
-        ? body.message
-        : "";
-    const payload = {
-      ok: true,
-      type: "chat",
-      conversationId: "mock-conversation-local",
-      message: {
-        role: "ASSISTANT",
-        content: message
-          ? `這是本機 mock 回覆：已收到「${message}」。`
-          : "這是本機 mock 回覆，可用來檢查聊天 UI。",
-      },
-    };
+    const mockBody =
+      body && typeof body === "object" ? (body as Record<string, unknown>) : {};
+    const requestedType = String(
+      mockBody.forcedType || mockBody.type || ""
+    ).toLowerCase();
+    const isGenerationRequest =
+      requestedType === "image" ||
+      requestedType === "video" ||
+      requestedType === "audio";
+    const payload = isGenerationRequest
+      ? createMockGenerationSubmission(mockBody)
+      : {
+          ok: true,
+          type: "chat",
+          conversationId: "mock-conversation-local",
+          message: {
+            role: "ASSISTANT",
+            content:
+              typeof mockBody.message === "string" && mockBody.message
+                ? `這是本機 mock 回覆：已收到「${mockBody.message}」。`
+                : "這是本機 mock 回覆，可用來檢查聊天 UI。",
+          },
+        };
 
     if ((req.headers.get("accept") || "").includes("text/event-stream")) {
       const encoder = new TextEncoder();

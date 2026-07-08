@@ -5381,11 +5381,14 @@ export default function PromptForm({
             ? "/generate/create"
             : selectedCapabilityModel?.submit?.endpoint ||
                 capabilityResponse?.submission?.endpoint ||
-                "/generate/create"
+                "/chat/create"
         );
 
         const basePayload: Record<string, unknown> = {
           uuid: id,
+          forcedType: shouldUsePiapiFaceSwap
+            ? (isVideoFaceSwapMode ? "video" : "image")
+            : effectiveGenerateType || selectedCapabilityModel?.submit?.type || "image",
           type: shouldUsePiapiFaceSwap
             ? (isVideoFaceSwapMode ? "video" : "image")
             : effectiveGenerateType || selectedCapabilityModel?.submit?.type || "image",
@@ -5467,6 +5470,11 @@ export default function PromptForm({
         );
       } else {
         requestBody = {
+          forcedType: isModelTextMode
+            ? selectedCapabilityModel?.submit?.type || selectedCapabilityModel?.kind || "text"
+            : shouldUseIntentRouter && effectiveGenerateType
+              ? effectiveGenerateType
+              : "chat",
           ...(isModelTextMode && selectedModelRequestId
             ? {
                 type: selectedCapabilityModel?.submit?.type || selectedCapabilityModel?.kind || "text",
