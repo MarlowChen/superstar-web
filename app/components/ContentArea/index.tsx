@@ -214,7 +214,7 @@ const ContentArea: React.FC = () => {
         </div>
 
         <div className="fixed bottom-0 mb-4 text-center">
-            <p className="text-sm text-custom-black">Copyright © 2025 PSF Inc. <br/> “Please note that AI generation is random and unpredictable. Do not use it to infringe copyrights.”</p>
+            <p className="text-sm text-custom-black">Copyright © 2025 Hondolab Inc. <br/> “Please note that AI generation is random and unpredictable. Do not use it to infringe copyrights.”</p>
           </div>
       </div>
       {/* {isModelSelectorOpen && (

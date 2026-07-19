@@ -1,7 +1,7 @@
 {
-"badge": "新機能",
+  "badge": "新機能",
   "version": "v2.0 - AI Magic 編集",
   "title": "Magic Edit のご紹介",
   "description": "新しい生成AIエンジンで、ビジュアルを瞬時に変換。映画のようなクオリティと精密なコントロールで、創造性を解き放ちましょう。",
   "button": "今すぐ試す"
-  }
+}

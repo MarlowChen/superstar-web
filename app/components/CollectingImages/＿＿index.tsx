@@ -92,7 +92,7 @@ const PublishedImages: React.FC = () => {
         if (!response.ok) throw new Error(`Failed to fetch image ${index + 1}`);
         const blob = await response.blob();
         // zip.file(`image-${index + 1}.jpg`, blob);
-        zip.file(`psf-${group.loraModelName}-${Date.now()}-${index + 1}.jpg`, blob);
+        zip.file(`hondolab-${group.loraModelName}-${Date.now()}-${index + 1}.jpg`, blob);
       });
 
       await Promise.all(imagePromises);
@@ -103,7 +103,7 @@ const PublishedImages: React.FC = () => {
       const link = document.createElement("a");
       link.href = downloadUrl;
       // link.download = `images-${Date.now()}.zip`;
-      link.download = `psf-${group.loraModelName}-${Date.now()}.jpg`;
+      link.download = `hondolab-${group.loraModelName}-${Date.now()}.jpg`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

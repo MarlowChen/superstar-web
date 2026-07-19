@@ -5,8 +5,8 @@ import { AuthProvider } from "@/app/context/AuthContext";
 import { getMeUser } from "@/app/utilities/getUser";
 
 // === 固定設定 ===
-const SITE_NAME = "PSF Yours";
-const PAGE_TITLE = "PSF Yours：為您打造專屬AI模型與數位資產";
+const SITE_NAME = "Hondolab Yours";
+const PAGE_TITLE = "Hondolab Yours：為您打造專屬AI模型與數位資產";
 const PREVIEW_URL =
   "https://psf.nyc3.cdn.digitaloceanspaces.com/psf/psf-custom.png";
 

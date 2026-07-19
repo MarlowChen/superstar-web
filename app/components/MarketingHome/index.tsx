@@ -18,7 +18,7 @@ type MarketingCopy = {
 
 const copyByLocale: Record<string, MarketingCopy> = {
   "zh-TW": {
-    badge: "Aierone Creative System",
+    badge: "Hondolab Creative System",
     title: "先給你一個像產品首頁的入口，再進登入與創作流程。",
     description:
       "參考 moreu-web 的節奏，首頁先展示產品氣質、能力與進入點。登入則改成完整的 Google 或帳號密碼雙流程。",
@@ -53,7 +53,7 @@ const copyByLocale: Record<string, MarketingCopy> = {
     ],
   },
   ja: {
-    badge: "Aierone Creative System",
+    badge: "Hondolab Creative System",
     title: "ログインへ直行する前に、まずプロダクトらしいホームを見せる。",
     description:
       "moreu-web の流れを参考に、最初はプロダクトの雰囲気と導線を見せ、ログインは Google とメールの両対応にします。",
@@ -88,7 +88,7 @@ const copyByLocale: Record<string, MarketingCopy> = {
     ],
   },
   en: {
-    badge: "Aierone Creative System",
+    badge: "Hondolab Creative System",
     title: "Show a product-style landing page first instead of dropping straight into auth.",
     description:
       "This follows the moreu-web rhythm: lead with product atmosphere and entry points, then offer a complete Google or email sign-in flow.",
@@ -143,7 +143,7 @@ const MarketingHome = ({ locale, hasSession }: MarketingHomeProps) => {
         <header className="flex items-center justify-between rounded-full border border-white/55 bg-white/60 px-5 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
           <div>
             <p className="text-sm font-semibold tracking-[0.22em] text-slate-500 dark:text-slate-300">
-              AIERONE
+              HONDOLAB
             </p>
           </div>
           <div className="flex items-center gap-3">

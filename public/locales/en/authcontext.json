@@ -1,14 +1,14 @@
 {
-    "Failed to update language setting": "Failed to update language setting",
-    "Failed to update language": "Failed to update language",
-    "Failed to update user settings": "Failed to update user settings",
-    "Failed to update settings": "Failed to update settings",
-    "Failed to fetch points": "Failed to fetch points",
-    "Failed to fetch user settings": "Failed to fetch user settings",
-    "Session_expired": "Session expired. Please login again.",
-    "Failed to update lora setting": "Failed to update model setting",
-    "Failed to update lora": "Failed to update model",
-    "Failed to update theme setting": "Failed to update theme setting",
-    "Failed to update theme": "Failed to update theme",
-    "Failed to update style": "Failed to update style"
-}   
+  "Failed to update language setting": "Failed to update language setting",
+  "Failed to update language": "Failed to update language",
+  "Failed to update user settings": "Failed to update user settings",
+  "Failed to update settings": "Failed to update settings",
+  "Failed to fetch points": "Failed to fetch points",
+  "Failed to fetch user settings": "Failed to fetch user settings",
+  "Session_expired": "Session expired. Please login again.",
+  "Failed to update lora setting": "Failed to update model setting",
+  "Failed to update lora": "Failed to update model",
+  "Failed to update theme setting": "Failed to update theme setting",
+  "Failed to update theme": "Failed to update theme",
+  "Failed to update style": "Failed to update style"
+}

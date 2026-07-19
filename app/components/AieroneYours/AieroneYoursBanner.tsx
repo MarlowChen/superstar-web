@@ -19,7 +19,7 @@ const PSFYoursBanner = () => {
       {/* 16:9 等比例容器 - 與原版架構一致 */}
       <div className="relative w-full" style={{ paddingTop: "56.25%" }}>
         <div className="absolute inset-0">
-          {/* 第一行文字 - PSF 靠左，佔寬度 2/3 */}
+          {/* 第一行文字 - Hondolab 靠左，佔寬度 2/3 */}
           <div
             className={`
               absolute top-[3%] left-[2%]

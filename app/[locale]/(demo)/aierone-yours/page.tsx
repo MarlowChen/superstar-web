@@ -5,8 +5,8 @@ import { getMeUser } from "@/app/utilities/getUser";
 import PSFYoursPage from "@/app/components/AieroneYours/AieroneYours";
 
 // === 固定設定 ===
-const SITE_NAME = "PSF Yours";
-const PAGE_TITLE = "PSF Yours";
+const SITE_NAME = "Hondolab Yours";
+const PAGE_TITLE = "Hondolab Yours";
 const PREVIEW_URL =
   "https://psf.nyc3.cdn.digitaloceanspaces.com/psf-yours.png";
 

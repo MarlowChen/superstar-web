@@ -80,6 +80,19 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const normalizeAuthUser = (value: User | null | undefined): User | null => {
+  if (!value) return null;
+
+  const record = value as User & {
+    id?: string;
+    _id?: string;
+    userId?: string;
+  };
+  const id = String(record.id || record._id || record.userId || "").trim();
+
+  return id ? ({ ...value, id } as User) : value;
+};
+
 // 預設設定
 const DEFAULT_SETTINGS: UserSettings = {
   language: "DEFAULT",
@@ -111,12 +124,16 @@ export const AuthProvider: React.FC<{
     pathname,
     sessionExpiredMessage: t("Session_expired"),
   });
-  const [user, setUser] = useState<User | null>(initialUser);
+  const [user, setUserState] = useState<User | null>(() => normalizeAuthUser(initialUser));
   const [loading, setLoading] = useState(true);
   const [point, setPoint] = useState<number>(0);
   const [userPoint, setUserPoint] = useState<UserPoint | null>(null);
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
   const userId = user?.id;
+
+  const setUser = useCallback((nextUser: User | null) => {
+    setUserState(normalizeAuthUser(nextUser));
+  }, []);
 
   useEffect(() => {
     authRouteRef.current = {
@@ -179,7 +196,7 @@ export const AuthProvider: React.FC<{
         throw error;
       }
     },
-    [router]
+    [router, setUser]
   );
 
   const updateUserPoint = useCallback(async () => {
@@ -366,7 +383,7 @@ export const AuthProvider: React.FC<{
         return null;
       }
     },
-    [authenticatedRequest, t, user]
+    [authenticatedRequest, setUser, t, user]
   );
 
   const checkAuthStatus = useCallback(async () => {
@@ -402,7 +419,7 @@ export const AuthProvider: React.FC<{
       window.clearTimeout(timeoutId);
       setLoading(false);
     }
-  }, []);
+  }, [setUser]);
 
   const login = useCallback(
     async (email: string, password: string, callbackUrl?: string) => {
@@ -432,7 +449,7 @@ export const AuthProvider: React.FC<{
         setLoading(false);
       }
     },
-    []
+    [setUser]
   );
 
   const register = useCallback(
@@ -504,7 +521,7 @@ export const AuthProvider: React.FC<{
         setLoading(false);
       }
     },
-    []
+    [setUser]
   );
 
   const logout = async () => {

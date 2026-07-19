@@ -28,7 +28,7 @@ type AuthCopy = {
 
 const AUTH_COPY: Record<string, AuthCopy> = {
   "zh-TW": {
-    eyebrow: "Aierone Access",
+    eyebrow: "Hondolab Access",
     title: "把生成、編輯與收藏整理成同一個創作入口。",
     description:
       "先登入，再回到原本的工作流繼續操作。你可以用 Google 快速登入，也可以用帳號密碼進入。",
@@ -37,7 +37,7 @@ const AUTH_COPY: Record<string, AuthCopy> = {
     home: "返回首頁",
   },
   ja: {
-    eyebrow: "Aierone Access",
+    eyebrow: "Hondolab Access",
     title: "生成、編集、保存をひとつの制作入口にまとめる。",
     description:
       "ログイン後は元の制作フローへ戻ります。Google でも、メールとパスワードでもサインインできます。",
@@ -46,7 +46,7 @@ const AUTH_COPY: Record<string, AuthCopy> = {
     home: "ホームへ戻る",
   },
   en: {
-    eyebrow: "Aierone Access",
+    eyebrow: "Hondolab Access",
     title: "Keep generation, editing, and saved work inside one creative entry point.",
     description:
       "Sign in first, then return to the exact flow you came from. Use Google for speed or email and password for a standard account flow.",

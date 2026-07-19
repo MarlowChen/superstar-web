@@ -1,9 +1,6 @@
 {
-    "welcome": "こんにちは",
-    "description": "これは next-i18next を使用した例です",
-    "payment_success": "支払いが成功しました！クレジットがアカウントに追加されました",
-    "confirm": "確認"
+  "welcome": "こんにちは",
+  "description": "これは next-i18next を使用した例です",
+  "payment_success": "支払いが成功しました！クレジットがアカウントに追加されました",
+  "confirm": "確認"
 }
-
-
-

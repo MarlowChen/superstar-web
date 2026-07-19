@@ -516,7 +516,7 @@ export default function LandingHome({
             {homepagePlans.map((plan) => (
               <div
                 key={plan.name}
-                className={`psf-plan${plan.isPopular ? " is-popular" : ""}`}
+                className={`hondolab-plan${plan.isPopular ? " is-popular" : ""}`}
               >
                 {plan.isPopular ? <span className="psf-plan-flag">{paymentT("popular")}</span> : null}
 
@@ -553,7 +553,7 @@ export default function LandingHome({
                     }
                     setOpenPaymentModel(true);
                   }}
-                  className={`psf-btn psf-plan-btn ${
+                  className={`hondolab-btn psf-plan-btn ${
                     plan.isPopular ? "psf-btn-primary" : "psf-btn-soft"
                   }`}
                 >

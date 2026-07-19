@@ -845,7 +845,7 @@ export default function GalleryPage() {
       <section className="w-full max-w-7xl mx-auto px-6 mt-10">
         <div className="max-w-[80ch]">
           <h1 className="text-2xl md:text-3xl font-bold text-white">
-            PSF Yours：為您打造專屬 AI 模型與數位資產
+            Hondolab Yours：為您打造專屬 AI 模型與數位資產
           </h1>
           <div className="mt-4 text-slate-200 leading-8 text-[15px] space-y-4">
             <p>AI 生成的浪潮已然來臨，但它也帶來一個根本性困境：您是在建立「資產」還是在積累「負債」？</p>
@@ -1116,7 +1116,7 @@ export default function GalleryPage() {
 
       <footer className="bg-slate-950 border-t border-slate-800 py-8 mt-12">
         <div className="max-w-6xl mx-auto px-4 text-center text-gray-500">
-          <p>© PSF Inc. All rights reserved.</p>
+          <p>© Hondolab Inc. All rights reserved.</p>
         </div>
       </footer>
 

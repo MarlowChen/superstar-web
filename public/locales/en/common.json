@@ -1,7 +1,6 @@
 {
-    "welcome": "Hello",
-    "description": "这是一个使用 next-i18next 的示例",
-    "payment_success": "Payment successful! Credits have been added to your account",
-    "confirm": "Confirm"
-  }
-  
+  "welcome": "Hello",
+  "description": "这是一个使用 next-i18next 的示例",
+  "payment_success": "Payment successful! Credits have been added to your account",
+  "confirm": "Confirm"
+}

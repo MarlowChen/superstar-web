@@ -3,7 +3,6 @@
   "yearly_subscription": "年訂閱",
   "monthly_subscription": "月訂閱",
   "points": "點數",
-  
   "standard_plan_name": "基本",
   "standard_plan_tagline": "",
   "standard_plan_price": "$0",
@@ -13,7 +12,6 @@
   "standard_feature_2": "每次平均時間約60~70秒。當日首次使用可能花費較長時間。",
   "standard_feature_3": "可下載圖像，圖像品質1,024 x 1,024，具浮水印。",
   "standard_feature_4": "不能收藏、儲存與註解生成或轉換結果，可分享與傳播，但無任何商業使用權且無著作權。",
-  
   "plus_plan_name": "進階",
   "plus_plan_tagline": "",
   "plus_plan_subtagline": "",
@@ -29,7 +27,6 @@
   "plus_feature_4": "可享有專屬空間收藏、儲存、註解與所有生成或轉換結果。",
   "plus_feature_5": "可使用各種內建AI優化與編輯功能。",
   "plus_feature_6": "可獲得商業使用權與符合使用者當地法令之著作權。",
-
   "pro_plan_name": "專業",
   "pro_plan_tagline": "",
   "pro_plan_subtagline": "",
@@ -46,7 +43,6 @@
   "pro_feature_5": "可使用各種內建AI優化與編輯功能。",
   "pro_feature_6": "可獲得客製化專屬AI生成模型訂製服務的特殊優惠。",
   "pro_feature_7": "可獲得商業使用權與符合使用者當地法令之著作權。",
-
   "max_plan_name": "頂尖",
   "max_plan_tagline": "",
   "max_plan_subtagline": "",
@@ -63,7 +59,6 @@
   "max_feature_5": "可使用各種內建AI優化與編輯功能。",
   "max_feature_6": "可獲得客製化專屬AI生成模型訂製服務的特殊優惠。",
   "max_feature_7": "可獲得商業使用權與符合使用者當地法令之著作權。",
-
   "payg_plan_name": "按量付費",
   "payg_plan_tagline": "用完再買",
   "payg_plan_price": "$50美元",
@@ -142,5 +137,4 @@
   "pay_now": "立即支付",
   "total_due_today": "今日應付總額",
   "points_reset_to": "點數重置為 {number}"
-
 }

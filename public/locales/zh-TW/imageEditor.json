@@ -48,9 +48,9 @@
     "target_size": "目標尺寸",
     "adjust_mode": "調整模式",
     "compare_original": "與原圖比較",
-      "zoom": "放大",
-      "zoom_in": "放大",
-      "zoom_out": "縮小",
+    "zoom": "放大",
+    "zoom_in": "放大",
+    "zoom_out": "縮小",
     "presets": {
       "original": "原始尺寸",
       "facebook_cover": "Facebook 封面",

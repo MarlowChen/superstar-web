@@ -48,9 +48,9 @@
     "target_size": "Target Size",
     "adjust_mode": "Adjust Mode",
     "compare_original": "Compare with Original",
-      "zoom": "Zoom",
-      "zoom_in": "Zoom In",
-      "zoom_out": "Zoom Out",
+    "zoom": "Zoom",
+    "zoom_in": "Zoom In",
+    "zoom_out": "Zoom Out",
     "presets": {
       "original": "Original Size",
       "facebook_cover": "Facebook Cover",

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-export async function GET() {
+export async function GET(request: Request) {
   const token =
     cookies().get("payload-token")?.value ||
     cookies().get("auth-token")?.value;
@@ -18,7 +18,13 @@ export async function GET() {
     );
   }
 
-  const response = await fetch(new URL("/chat/conversations", backendUrl), {
+  const upstreamUrl = new URL("/chat/conversations", backendUrl);
+  const requestUrl = new URL(request.url);
+  requestUrl.searchParams.forEach((value, key) => {
+    upstreamUrl.searchParams.set(key, value);
+  });
+
+  const response = await fetch(upstreamUrl, {
     method: "GET",
     headers: {
       Authorization: `JWT ${token}`,

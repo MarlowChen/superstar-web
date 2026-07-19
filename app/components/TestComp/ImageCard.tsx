@@ -76,7 +76,7 @@ const ImageCard: React.FC<ImageCardProps> = ({
     ctx.font = "bold 34px Arial";
     ctx.fillStyle = "#ffffff91";
     ctx.textBaseline = "middle";
-    ctx.fillText("psf", x + logoWidth + 3, y + logoHeight / 2 + 3);
+    ctx.fillText("Hondolab", x + logoWidth + 3, y + logoHeight / 2 + 3);
   };
 
   const loadImage = async () => {

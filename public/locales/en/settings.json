@@ -39,9 +39,9 @@
   "developing": "This feature is under development...",
   "document_not_found": "Document not found",
   "success": {
-      "language_updated": "Language settings updated",
-      "theme_updated": "Theme settings updated"
-    },
+    "language_updated": "Language settings updated",
+    "theme_updated": "Theme settings updated"
+  },
   "order_history": {
     "title": "Order History",
     "description": "View all your purchase records and invoices",

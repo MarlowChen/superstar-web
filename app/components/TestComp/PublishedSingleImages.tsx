@@ -402,7 +402,7 @@ const PublishedRandomImages: React.FC = () => {
       type: "grid-layout-reverse", // 米色主題：左圖右文 (Reverse Grid)
       bgColor: "#F3F1E7", // 參考 4.jpg 的米色背景
       textColor: "#333333", // 深色文字
-      title: t("banner_custom_model_title") || "psf Yours",
+      title: t("banner_custom_model_title") || "Hondolab Yours",
       subtitle: t("banner_custom_model_subtitle") || "Custom AI Models",
       buttonText: t("banner_custom_model_button") || "LEARN MORE",
       onClick: () => handleBannerClick("/psf-yours", "_blank"),

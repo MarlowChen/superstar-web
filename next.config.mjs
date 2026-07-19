@@ -33,6 +33,16 @@ const nextConfig = {
         hostname: "cdn2.stablediffusionapi.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "musicfile.kie.ai",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "atlas-media.oss-us-west-1.aliyuncs.com",
+        pathname: "/**",
+      },
     ],
     domains: [
       process.env.NEXT_PUBLIC_SERVER_URL,

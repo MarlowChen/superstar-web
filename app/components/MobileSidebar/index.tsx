@@ -11,6 +11,7 @@ import { HomeIcon } from "../Drawing/icons/HomeIcon";
 import { SettingIcon } from "../Drawing/icons/SettingIcon";
 import { HeartIcon } from "@/app/icon/CollectIcon";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { fetchAllConversations } from "@/app/utils/fetchAllConversations";
 import PaymentModelDialog from "../PaymentModelDialog";
 
 interface ConversationListItem {
@@ -117,25 +118,8 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({
 
     const fetchConversations = async () => {
       try {
-        const res = await fetch("/api/chat/conversations", {
-          method: "GET",
-          credentials: "include",
-        });
-
-        if (!res.ok) return;
-
-        const data = await res.json();
-        const items = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.result)
-            ? data.result
-            : Array.isArray(data?.docs)
-              ? data.docs
-              : Array.isArray(data?.result?.docs)
-                ? data.result.docs
-                : [];
-
-        setConversations(items.slice(0, 12));
+        const items = await fetchAllConversations<ConversationListItem>();
+        setConversations(items);
       } catch (error) {
         console.error("Failed to fetch conversations:", error);
       }

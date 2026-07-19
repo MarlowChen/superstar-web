@@ -48,9 +48,9 @@
     "target_size": "ターゲットサイズ",
     "adjust_mode": "調整モード",
     "compare_original": "元の画像と比較",
-      "zoom": "ズーム",
-      "zoom_in": "ズームイン",
-      "zoom_out": "ズームアウト",
+    "zoom": "ズーム",
+    "zoom_in": "ズームイン",
+    "zoom_out": "ズームアウト",
     "presets": {
       "original": "元のサイズ",
       "facebook_cover": "Facebookカバー",
@@ -291,6 +291,3 @@
   },
   "title": "画像エディター"
 }
-
-
-

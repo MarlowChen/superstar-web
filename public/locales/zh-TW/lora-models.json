@@ -4,7 +4,7 @@
   "model_description": "模型描述",
   "model_info": "模型資訊",
   "style_tags": "風格標籤",
-  "model_id": "模型 ID", 
+  "model_id": "模型 ID",
   "created_at": "創建時間",
   "no_description": "暫無描述",
   "no_description_hint": "此模型尚未提供詳細描述",

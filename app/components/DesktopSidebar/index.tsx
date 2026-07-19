@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl";
 import { SettingIcon } from "../Drawing/icons/SettingIcon";
 import { HeartIcon } from "@/app/icon/CollectIcon";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { fetchAllConversations } from "@/app/utils/fetchAllConversations";
 
 type Theme = "light" | "dark";
 
@@ -111,25 +112,8 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
   const fetchConversations = useCallback(async () => {
     try {
-      const res = await fetch("/api/chat/conversations", {
-        method: "GET",
-        credentials: "include",
-      });
-
-      if (!res.ok) return;
-
-      const data = await res.json();
-      const items = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.result)
-          ? data.result
-          : Array.isArray(data?.docs)
-            ? data.docs
-            : Array.isArray(data?.result?.docs)
-              ? data.result.docs
-              : [];
-
-      setConversations(items.slice(0, 12));
+      const items = await fetchAllConversations<ConversationListItem>();
+      setConversations(items);
     } catch (error) {
       console.error("Failed to fetch conversations:", error);
     }

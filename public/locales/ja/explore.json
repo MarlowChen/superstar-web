@@ -20,7 +20,7 @@
   "banner_payment_subtitle_2": "",
   "banner_payment_subtitle_3": "",
   "banner_payment_button": "今すぐプランを表示",
-  "banner_image_transfer": "PSF画像スタイル変換",
+  "banner_image_transfer": "Hondolab画像スタイル変換",
   "banner_image_transfer_subtitle_1": "まだGPTの方が良いと思っていますか？",
   "banner_image_transfer_subtitle_2": "もうそうは言えません！",
   "banner_image_transfer_subtitle_3": "",
@@ -28,7 +28,7 @@
   "banner_new_model_title": "新モデル登場",
   "banner_new_model_subtitle": "全く新しい画像生成体験を始めよう",
   "banner_new_model_button": "今すぐ試す",
-  "banner_custom_model_title": "PSF Yours",
+  "banner_custom_model_title": "Hondolab Yours",
   "banner_custom_model_subtitle": "カスタムAIモデル",
   "banner_custom_model_button": "詳細を見る"
 }

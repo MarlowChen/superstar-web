@@ -52,6 +52,8 @@ const policies = {
     "https://aierone.nyc3.digitaloceanspaces.com",
     "https://*.r2.dev",
     "https://cdn2.stablediffusionapi.com",
+    "https://musicfile.kie.ai",
+    "https://atlas-media.oss-us-west-1.aliyuncs.com",
     "https://openrouter.ai",
     "https://www.google-analytics.com",
     "https://www.googletagmanager.com",
@@ -75,6 +77,8 @@ const policies = {
     "https://aierone.nyc3.digitaloceanspaces.com",
     "https://*.r2.dev",
     "https://cdn2.stablediffusionapi.com",
+    "https://musicfile.kie.ai",
+    "https://atlas-media.oss-us-west-1.aliyuncs.com",
     "https://openrouter.ai",
   ],
   "font-src": [

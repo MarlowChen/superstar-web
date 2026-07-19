@@ -93,11 +93,11 @@
   "no_images_yet": "まだ画像が生成されていません",
   "start_generating_prompt": "プロンプトを入力して最初の画像を生成しましょう！",
   "auto_prompt": "自動プロンプト",
-    "auto_prompt_enabled": "自動プロンプト有効",
-    "auto_prompt_disabled": "自動プロンプト無効",
-    "select_ratio": "画像比率を選択",
-    "follow_main_reference": "メイン画像に追従",
-    "ratio_square": "正方形 (1:1)",
-    "ratio_portrait": "縦長 (2:3)",
-    "ratio_landscape": "横長 (3:2)"
+  "auto_prompt_enabled": "自動プロンプト有効",
+  "auto_prompt_disabled": "自動プロンプト無効",
+  "select_ratio": "画像比率を選択",
+  "follow_main_reference": "メイン画像に追従",
+  "ratio_square": "正方形 (1:1)",
+  "ratio_portrait": "縦長 (2:3)",
+  "ratio_landscape": "横長 (3:2)"
 }

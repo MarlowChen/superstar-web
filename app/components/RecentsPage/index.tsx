@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
+import { fetchAllConversations } from "@/app/utils/fetchAllConversations";
 
 interface ConversationListItem {
   id: string;
@@ -79,26 +80,7 @@ export default function RecentsPage() {
     const fetchConversations = async () => {
       try {
         setLoading(true);
-        const res = await fetch("/api/chat/conversations", {
-          method: "GET",
-          credentials: "include",
-        });
-
-        if (!res.ok) {
-          if (!cancelled) setConversations([]);
-          return;
-        }
-
-        const data = await res.json();
-        const items = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.result)
-            ? data.result
-            : Array.isArray(data?.docs)
-              ? data.docs
-              : Array.isArray(data?.result?.docs)
-                ? data.result.docs
-                : [];
+        const items = await fetchAllConversations<ConversationListItem>();
 
         if (!cancelled) {
           setConversations(items);

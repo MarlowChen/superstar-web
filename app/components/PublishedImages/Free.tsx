@@ -219,7 +219,7 @@ const PublishedImages: React.FC = () => {
       const downloadUrl = URL.createObjectURL(content);
       const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = `psf-${group.loraModelName}-${group.taskId}.zip`;
+      link.download = `hondolab-${group.loraModelName}-${group.taskId}.zip`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

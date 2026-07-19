@@ -889,7 +889,7 @@ export default function ImageGallery({
   }, [images]);
 
   const { toggleReaction, toggleReactionComment } = useReactions();
-  const leftPerson = { name: "PSF", avatar: "AI" };
+  const leftPerson = { name: "Hondolab", avatar: "AI" };
   const rightPerson = { name: "You", avatar: "你" };
   const tx = useCallback(
     (key: string, fallback: string) => {

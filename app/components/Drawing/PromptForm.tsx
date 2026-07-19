@@ -32,6 +32,7 @@ import {
   GripVertical,
   FileAudio,
   ChevronDown,
+  Settings2,
 } from "lucide-react";
 import { LoraModel, Media } from "@/payload-types";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -582,10 +583,47 @@ const getCapabilityParamsByType = (
 
 const pickCapabilityModeSendKeys = (
   model: CapabilityModel | null | undefined,
-  values: Record<string, unknown>
+  values: Record<string, unknown>,
+  preferredVideoImageMode: VideoImageAttachmentMode = "reference"
 ) => {
   const modes = model?.requestRules?.modes || [];
-  if (modes.length === 0) return null;
+  const params = model?.params || [];
+
+  const buildGroupedParamFallback = () => {
+    const hasReferenceParams = params.some(
+      (param) =>
+        param.key === "referenceImageUrls" ||
+        param.key === "referenceAudioUrls" ||
+        param.group === "multimodal_reference"
+    );
+    const hasFirstLastParams = params.some(
+      (param) =>
+        param.key === "firstFrameUrl" ||
+        param.key === "lastFrameUrl" ||
+        param.group === "first_last_frame"
+    );
+
+    if (!hasReferenceParams && !hasFirstLastParams) return null;
+
+    const send = new Set(params.map((param) => param.key));
+    if (preferredVideoImageMode === "first_last" && hasFirstLastParams) {
+      send.delete("referenceImageUrls");
+      send.delete("referenceAudioUrls");
+      if (hasReferenceParams) send.delete("images");
+      return send;
+    }
+
+    if (hasReferenceParams) {
+      send.delete("firstFrameUrl");
+      send.delete("lastFrameUrl");
+      send.delete("images");
+      return send;
+    }
+
+    return send;
+  };
+
+  if (modes.length === 0) return buildGroupedParamFallback();
 
   const hasAnyValue = (keys: string[] = []) =>
     keys.some((key) => {
@@ -598,28 +636,18 @@ const pickCapabilityModeSendKeys = (
     const send = mode.send || [];
     return send.includes("referenceImageUrls") || send.includes("referenceAudioUrls");
   });
-  if (
-    referenceMode?.send &&
-    hasAnyValue(["referenceAudioUrls"])
-  ) {
-    return new Set(referenceMode.send);
-  }
-
-  const referenceImages = values.referenceImageUrls;
-  if (
-    referenceMode?.send &&
-    Array.isArray(referenceImages) &&
-    referenceImages.length > 2
-  ) {
-    return new Set(referenceMode.send);
-  }
-
   const firstLastMode = modes.find((mode) => {
     const send = mode.send || [];
     return send.includes("firstFrameUrl") || send.includes("lastFrameUrl");
   });
+
+  if (referenceMode?.send && hasAnyValue(["referenceAudioUrls"])) {
+    return new Set(referenceMode.send);
+  }
+
   if (
     firstLastMode?.send &&
+    preferredVideoImageMode === "first_last" &&
     hasAnyValue(["firstFrameUrl", "lastFrameUrl"])
   ) {
     return new Set(firstLastMode.send);
@@ -630,6 +658,13 @@ const pickCapabilityModeSendKeys = (
     hasAnyValue(["referenceImageUrls", "referenceAudioUrls"])
   ) {
     return new Set(referenceMode.send);
+  }
+
+  if (
+    firstLastMode?.send &&
+    hasAnyValue(["firstFrameUrl", "lastFrameUrl"])
+  ) {
+    return new Set(firstLastMode.send);
   }
 
   const textMode = modes.find((mode) => {
@@ -676,6 +711,8 @@ const normalizeGenerationStatus = (
 };
 
 const BANANA_MAX_REFERENCE_IMAGES = 4;
+
+type VideoImageAttachmentMode = "reference" | "first_last";
 
 type GenerateType = "image" | "video" | "audio" | "text";
 type SubmitType = GenerateType | "chat" | null;
@@ -767,6 +804,18 @@ type ChatCreateResponse = {
   error?: unknown;
   detail?: unknown;
   removeMessageIds?: string[];
+};
+
+const resolveAuthUserId = (value: unknown): string => {
+  if (!value || typeof value !== "object") return "";
+
+  const record = value as {
+    id?: unknown;
+    _id?: unknown;
+    userId?: unknown;
+  };
+
+  return String(record.id || record._id || record.userId || "").trim();
 };
 
 const normalizeChatCreateResponse = (payload: unknown): ChatCreateResponse | null => {
@@ -1000,6 +1049,129 @@ const isInsufficientPointsResponse = (
     text.includes("餘額不足")
   );
 };
+
+function VoiceSettingsControl({
+  locale,
+  model,
+  values,
+  onChange,
+}: {
+  locale: string;
+  model: CapabilityModel;
+  values: Record<string, string | number | boolean>;
+  onChange: (key: string, value: string | number | boolean) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const voiceParam = getCapabilityParam(model, "voice");
+  const stabilityParam = getCapabilityParam(model, "stability");
+  const languageParam = getCapabilityParam(model, "language_code");
+  const normalizationParam = getCapabilityParam(model, "apply_text_normalization");
+  const voiceValue = String(values.voice ?? voiceParam?.default ?? "");
+  const voiceLabel = voiceParam?.options?.find((option) => option.value === voiceValue)?.label || "Voice";
+  const stabilityValue = Number(values.stability ?? stabilityParam?.default ?? 0.5);
+
+  useEffect(() => {
+    if (!open) return;
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (
+        !rootRef.current?.contains(target) &&
+        !panelRef.current?.contains(target)
+      ) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [open]);
+
+  const buttonRect = open ? rootRef.current?.getBoundingClientRect() : null;
+  const panel =
+    open && buttonRect && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            ref={panelRef}
+            className="fixed z-[10000] w-72 rounded-lg border border-[#d6e2ee] bg-white p-3 shadow-xl dark:border-[#243648] dark:bg-[#101a26]"
+            style={{
+              left: Math.max(12, Math.min(buttonRect.right - 288, window.innerWidth - 300)),
+              top: Math.max(12, buttonRect.top - 8),
+              transform: "translateY(-100%)",
+            }}
+          >
+            <div className="grid gap-3">
+              {voiceParam && (
+                <label className="grid gap-1 text-xs font-medium text-[#526b82] dark:text-[#9bb0c4]">
+                  <span>{locale === "zh-TW" ? "聲音" : locale === "ja" ? "音声" : "Voice"}</span>
+                  <select
+                    value={voiceValue}
+                    onChange={(event) => onChange("voice", event.target.value)}
+                    className="h-9 rounded-md border border-[#d6e2ee] bg-white px-2 text-sm text-[#10243a] dark:border-[#31475e] dark:bg-[#152231] dark:text-white"
+                  >
+                    {(voiceParam.options || []).map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+
+              {stabilityParam && (
+                <label className="grid gap-1 text-xs font-medium text-[#526b82] dark:text-[#9bb0c4]">
+                  <span className="flex items-center justify-between">
+                    <span>Stability</span>
+                    <span>{stabilityValue.toFixed(2)}</span>
+                  </span>
+                  <input
+                    type="range"
+                    min={stabilityParam.min ?? 0}
+                    max={stabilityParam.max ?? 1}
+                    step="0.05"
+                    value={stabilityValue}
+                    onChange={(event) => onChange("stability", Number(event.target.value))}
+                    className="w-full accent-[#159cff]"
+                  />
+                </label>
+              )}
+
+              <div className="grid grid-cols-2 gap-2">
+                {[languageParam, normalizationParam].filter(Boolean).map((param) => (
+                  <label key={param!.key} className="grid min-w-0 gap-1 text-xs font-medium text-[#526b82] dark:text-[#9bb0c4]">
+                    <span className="truncate">{param!.label}</span>
+                    <select
+                      value={String(values[param!.key] ?? param!.default ?? "")}
+                      onChange={(event) => onChange(param!.key, event.target.value)}
+                      className="h-9 min-w-0 rounded-md border border-[#d6e2ee] bg-white px-2 text-sm text-[#10243a] dark:border-[#31475e] dark:bg-[#152231] dark:text-white"
+                    >
+                      {(param!.options || []).map((option) => (
+                        <option key={`${param!.key}:${option.value}`} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>,
+          document.body
+        )
+      : null;
+
+  return (
+    <div className="relative shrink-0" ref={rootRef}>
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#d6e2ee] bg-white px-2.5 text-xs font-medium text-[#10243a] hover:bg-[#eef5fb] dark:border-[#243648] dark:bg-[#101a26] dark:text-white dark:hover:bg-[#152231]"
+        title={locale === "zh-TW" ? "語音設定" : locale === "ja" ? "音声設定" : "Voice settings"}
+      >
+        <Settings2 size={14} />
+        <span className="max-w-20 truncate">{voiceLabel}</span>
+      </button>
+
+      {panel}
+    </div>
+  );
+}
 
 type ChatHistoryMessage = {
   id?: string;
@@ -1636,6 +1808,8 @@ export default function PromptForm({
   const [motionVideoUrl, setMotionVideoUrl] = useState<string>("");
   const [motionVideoFileName, setMotionVideoFileName] = useState<string>("");
   const [showStyleTransferMenu, setShowStyleTransferMenu] = useState(false);
+  const [videoImageAttachmentMode, setVideoImageAttachmentMode] =
+    useState<VideoImageAttachmentMode>("reference");
   const [showModelMenu, setShowModelMenu] = useState(false);
   const [capabilityResponse, setCapabilityResponse] = useState<CapabilityResponse | null>(null);
   const [isLoadingModelMenu, setIsLoadingModelMenu] = useState(false);
@@ -1851,6 +2025,8 @@ export default function PromptForm({
       selectedModelIdentity.includes("videofaceswap"));
   const isBananaImageModel =
     generateType === "image" && selectedModelIdentity.includes("banana");
+  const isElevenLabsVoiceModel =
+    generateType === "audio" && selectedModelIdentity.includes("elevenlabsvoice");
   const isTalkingAvatarModel =
     generateType === "video" &&
     selectedCapabilityModel?.submit?.modelId === "kie:KlingAIAvatarStandard";
@@ -1905,12 +2081,36 @@ export default function PromptForm({
     "";
   const selectedModelSupportsImageInput =
     Boolean(selectedCapabilityModel?.inputs?.images) || hasSchemaImageUpload || isBananaImageModel;
+  const referenceImageUrlsParam = getCapabilityParam(selectedCapabilityModel, "referenceImageUrls");
+  const firstFrameUrlParam = getCapabilityParam(selectedCapabilityModel, "firstFrameUrl");
+  const lastFrameUrlParam = getCapabilityParam(selectedCapabilityModel, "lastFrameUrl");
+  const supportsVideoReferenceImageMode =
+    generateType === "video" && Boolean(referenceImageUrlsParam);
+  const supportsVideoFirstLastFrameMode =
+    generateType === "video" && Boolean(firstFrameUrlParam || lastFrameUrlParam);
+  const selectedModelReferenceImageMax = getCapabilityParamMax(referenceImageUrlsParam);
+  const selectedModelFirstLastImageMax =
+    (firstFrameUrlParam ? Math.max(1, getCapabilityParamMax(firstFrameUrlParam) || 1) : 0) +
+    (lastFrameUrlParam ? Math.max(1, getCapabilityParamMax(lastFrameUrlParam) || 1) : 0);
+  const activeVideoImageAttachmentMode: VideoImageAttachmentMode =
+    supportsVideoReferenceImageMode &&
+    !(videoImageAttachmentMode === "first_last" && supportsVideoFirstLastFrameMode)
+      ? "reference"
+      : supportsVideoFirstLastFrameMode
+        ? "first_last"
+        : "reference";
   const selectedModelMaxReferenceImages = Math.max(
     0,
     schemaImageUploadMax ||
       Number(getCapabilityParam(selectedCapabilityModel, "images")?.max) ||
       (isBananaImageModel ? BANANA_MAX_REFERENCE_IMAGES : 0)
   );
+  const selectedVideoModeMaxReferenceImages =
+    generateType === "video"
+      ? activeVideoImageAttachmentMode === "first_last"
+        ? selectedModelFirstLastImageMax
+        : Math.max(selectedModelReferenceImageMax, selectedModelMaxReferenceImages)
+      : selectedModelMaxReferenceImages;
   const countParam = getCapabilityParam(selectedCapabilityModel, "count");
   const aspectRatioParam =
     getCapabilityParamByKeys(selectedCapabilityModel, [
@@ -1920,7 +2120,6 @@ export default function PromptForm({
     ]);
   const resolutionParam = getCapabilityParam(selectedCapabilityModel, "resolution");
   const durationParam = getCapabilityParam(selectedCapabilityModel, "duration");
-  const outputFormatParam = getCapabilityParam(selectedCapabilityModel, "output_format");
   const aspectRatioOptions = useMemo(
     () => normalizeCapabilityOptions(aspectRatioParam),
     [aspectRatioParam]
@@ -1989,7 +2188,7 @@ export default function PromptForm({
       isVideoFaceSwapMode ||
       generateType === null ||
       generateType === "image" ||
-      generateType === "video" ||
+      (generateType === "video" && (!selectedCapabilityModel || selectedModelSupportsImageInput)) ||
       (isTextMode && selectedModelSupportsImageInput) ||
       (!isManualImageMode || selectedModelSupportsImageInput));
   const canAttachAudio = !isTextMode && (
@@ -2016,8 +2215,8 @@ export default function PromptForm({
           : 3
       : generateType === "video"
         ? requiresVideoReferenceImage || !selectedCapabilityModel
-          ? Math.max(1, selectedModelMaxReferenceImages || 1)
-          : 3
+          ? Math.max(1, selectedVideoModeMaxReferenceImages || selectedModelMaxReferenceImages || 1)
+          : 0
       : isTextMode
         ? selectedModelSupportsImageInput
           ? selectedModelMaxReferenceImages
@@ -2025,6 +2224,23 @@ export default function PromptForm({
       : generateType
         ? GENERATE_TYPE_REFERENCE_LIMITS[generateType as GenerateType]
         : 3;
+
+  useEffect(() => {
+    if (generateType !== "video") {
+      if (videoImageAttachmentMode !== "reference") {
+        setVideoImageAttachmentMode("reference");
+      }
+      return;
+    }
+
+    if (!supportsVideoFirstLastFrameMode && videoImageAttachmentMode === "first_last") {
+      setVideoImageAttachmentMode("reference");
+    }
+  }, [
+    generateType,
+    supportsVideoFirstLastFrameMode,
+    videoImageAttachmentMode,
+  ]);
 
   const filteredMenuModels = useMemo(() => {
     return availableModels
@@ -4632,7 +4848,7 @@ export default function PromptForm({
   );
 
   useEffect(() => {
-    const userId = (user as { id?: string } | null | undefined)?.id;
+    const userId = resolveAuthUserId(user);
     if (!userId) {
       return;
     }
@@ -4765,7 +4981,7 @@ export default function PromptForm({
   }, [cleanupChatSSE, cleanupSSE, isReconnectableChatGroup, isReconnectableGroup, setupChatSSE, setupUserSSE]);
 
   useEffect(() => {
-    const userId = (user as { id?: string } | null | undefined)?.id;
+    const userId = resolveAuthUserId(user);
     if (!userId) {
       return;
     }
@@ -4842,6 +5058,19 @@ export default function PromptForm({
         );
         window.dispatchEvent(new CustomEvent("openLoginDialog"));
       }
+      return;
+    }
+
+    const currentUserId = resolveAuthUserId(user);
+    if (!currentUserId) {
+      showToast(
+        locale === "zh-TW"
+          ? "帳號資料仍在同步，請稍後再試"
+          : locale === "ja"
+            ? "アカウント情報を同期中です。少し待ってから再試行してください"
+            : "Account data is still syncing. Please try again in a moment.",
+        true
+      );
       return;
     }
 
@@ -5241,7 +5470,8 @@ export default function PromptForm({
           );
           const modeSendKeys = pickCapabilityModeSendKeys(
             selectedCapabilityModel,
-            paramValues
+            paramValues,
+            activeVideoImageAttachmentMode
           );
           const hiddenParamKeys = new Set(
             selectedCapabilityModel?.requestRules?.hiddenParams || []
@@ -5830,7 +6060,7 @@ export default function PromptForm({
 
       // 任務已建立後就釋放輸入鎖；SSE/輪詢只負責更新任務卡，不應阻塞下一次操作。
       setIsGenerating(false);
-      void setupUserSSE(user?.id || "", taskId).then((sseConnected) => {
+      void setupUserSSE(currentUserId, taskId).then((sseConnected) => {
         if (sseConnected) return;
         console.warn("SSE connection failed, but task was submitted successfully");
         startTaskStatusPolling(taskId, "submit-sse-failed");
@@ -5989,7 +6219,7 @@ export default function PromptForm({
   const retryFromSnapshot = useCallback(
     async (group: ImageDataGroup) => {
       const snapshot = group.requestSnapshot;
-      const userId = (user as { id?: string } | null | undefined)?.id || "";
+      const userId = resolveAuthUserId(user);
 
       if (!snapshot || !userId || submitInFlightRef.current) {
         return false;
@@ -7504,17 +7734,16 @@ export default function PromptForm({
                   );
                 })}
 
-                {generateType === "audio" &&
-                  selectedCapabilityModel?.submit?.modelId === "kie:ElevenLabsVoice" && (
-                    <>
-                      <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#d6e2ee] bg-white px-3 py-1.5 text-xs font-medium text-[#10243a] dark:border-[#243648] dark:bg-[#101a26] dark:text-white">
-                        <span>{locale === "zh-TW" ? "格式" : locale === "ja" ? "形式" : "Format"}</span>
-                        <span className="text-[#159cff] dark:text-[#53c7ff]">
-                          {String(outputFormatParam?.default || "mp3_44100_128")}
-                        </span>
-                      </label>
-                    </>
-                  )}
+                {isElevenLabsVoiceModel && selectedCapabilityModel && (
+                  <VoiceSettingsControl
+                    locale={locale}
+                    model={selectedCapabilityModel}
+                    values={dynamicParamValues}
+                    onChange={(key, value) =>
+                      setDynamicParamValues((current) => ({ ...current, [key]: value }))
+                    }
+                  />
+                )}
 
                 </div>
 
@@ -7658,6 +7887,17 @@ export default function PromptForm({
 	                      </button>
 	                    );
 	                  })}
+
+	                  {isElevenLabsVoiceModel && selectedCapabilityModel && (
+	                    <VoiceSettingsControl
+	                      locale={locale}
+	                      model={selectedCapabilityModel}
+	                      values={dynamicParamValues}
+	                      onChange={(key, value) =>
+	                        setDynamicParamValues((current) => ({ ...current, [key]: value }))
+	                      }
+	                    />
+	                  )}
 
 	                </div>
               </div>
@@ -7823,6 +8063,35 @@ export default function PromptForm({
                   {locale === "zh-TW" ? "加入素材" : locale === "ja" ? "素材を追加" : "Add Media"}
                 </div>
                 <div>
+                  {canAttachReferenceImages &&
+                    generateType === "video" &&
+                    supportsVideoReferenceImageMode &&
+                    supportsVideoFirstLastFrameMode && (
+                      <div className="mb-1 grid grid-cols-2 gap-1 rounded-xl bg-[#eef5fb] p-1 dark:bg-[#111c28]">
+                        <button
+                          type="button"
+                          onClick={() => setVideoImageAttachmentMode("reference")}
+                          className={`rounded-lg px-2 py-1.5 text-xs font-semibold transition-colors ${
+                            activeVideoImageAttachmentMode === "reference"
+                              ? "bg-white text-[#159cff] shadow-sm dark:bg-[#1d2b3b] dark:text-[#53c7ff]"
+                              : "text-[#7d97b0] hover:text-[#2f4356] dark:text-[#6f8ba6] dark:hover:text-white"
+                          }`}
+                        >
+                          {locale === "zh-TW" ? "參考圖" : locale === "ja" ? "参照画像" : "References"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setVideoImageAttachmentMode("first_last")}
+                          className={`rounded-lg px-2 py-1.5 text-xs font-semibold transition-colors ${
+                            activeVideoImageAttachmentMode === "first_last"
+                              ? "bg-white text-[#159cff] shadow-sm dark:bg-[#1d2b3b] dark:text-[#53c7ff]"
+                              : "text-[#7d97b0] hover:text-[#2f4356] dark:text-[#6f8ba6] dark:hover:text-white"
+                          }`}
+                        >
+                          {locale === "zh-TW" ? "首尾幀" : locale === "ja" ? "始終フレーム" : "First/last"}
+                        </button>
+                      </div>
+                    )}
                   {canAttachReferenceImages && effectiveMaxReferenceImages > 0 && (
                     <label
                       className="flex cursor-pointer items-center space-x-3 rounded-xl p-2.5 transition-colors hover:bg-[#eef5fb] dark:hover:bg-[#152231]"
@@ -7844,11 +8113,23 @@ export default function PromptForm({
                                 : locale === "ja"
                                   ? "キャラクター画像"
                                   : "Character image"
-                              : locale === "zh-TW"
-                                ? "上傳圖片"
-                                : locale === "ja"
-                                  ? "画像を追加"
-                                  : "Upload image"}
+                              : generateType === "video" && activeVideoImageAttachmentMode === "first_last"
+                                ? locale === "zh-TW"
+                                  ? "上傳首尾幀"
+                                  : locale === "ja"
+                                    ? "始終フレームを追加"
+                                    : "Upload first/last frames"
+                                : generateType === "video"
+                                  ? locale === "zh-TW"
+                                    ? "上傳參考圖"
+                                    : locale === "ja"
+                                      ? "参照画像を追加"
+                                      : "Upload reference images"
+                                  : locale === "zh-TW"
+                                    ? "上傳圖片"
+                                    : locale === "ja"
+                                      ? "画像を追加"
+                                      : "Upload image"}
                         </div>
                         <div className="text-xs text-[#7d97b0] dark:text-[#6f8ba6]">
                           {locale === "zh-TW"

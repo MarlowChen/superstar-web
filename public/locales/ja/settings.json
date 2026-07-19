@@ -39,9 +39,9 @@
   "developing": "この機能は開発中です...",
   "document_not_found": "ドキュメントが見つかりません",
   "success": {
-      "language_updated": "言語設定を更新しました",
-      "theme_updated": "テーマ設定を更新しました"
-    },
+    "language_updated": "言語設定を更新しました",
+    "theme_updated": "テーマ設定を更新しました"
+  },
   "order_history": {
     "title": "注文履歴",
     "description": "すべての購入記録と請求書を表示",

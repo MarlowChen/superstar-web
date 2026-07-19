@@ -93,11 +93,11 @@
   "no_images_yet": "No Images Generated Yet",
   "start_generating_prompt": "Start typing prompts to generate your first image!",
   "auto_prompt": "AI Prompt",
-    "auto_prompt_enabled": "AI Prompt Enabled",
-    "auto_prompt_disabled": "AI Prompt Disabled",
-    "select_ratio": "Select Ratio",
-    "follow_main_reference": "Follow main reference",
-    "ratio_square": "Square (1:1)",
-    "ratio_portrait": "Portrait (2:3)",
-    "ratio_landscape": "Landscape (3:2)"
+  "auto_prompt_enabled": "AI Prompt Enabled",
+  "auto_prompt_disabled": "AI Prompt Disabled",
+  "select_ratio": "Select Ratio",
+  "follow_main_reference": "Follow main reference",
+  "ratio_square": "Square (1:1)",
+  "ratio_portrait": "Portrait (2:3)",
+  "ratio_landscape": "Landscape (3:2)"
 }

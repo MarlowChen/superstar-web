@@ -96,7 +96,7 @@
   "auto_prompt_disabled": "自動提示詞已停用",
   "select_ratio": "選擇圖片比例",
   "follow_main_reference": "跟隨主圖",
-    "ratio_square": "正方形 (1:1)",
-    "ratio_portrait": "長型/直式 (2:3)",
-    "ratio_landscape": "橫型/寬式 (3:2)"
+  "ratio_square": "正方形 (1:1)",
+  "ratio_portrait": "長型/直式 (2:3)",
+  "ratio_landscape": "橫型/寬式 (3:2)"
 }
